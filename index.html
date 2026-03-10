@@ -43,7 +43,7 @@
             box-sizing: border-box; font-size: 16px; background: #f9f9f9; 
         }
         
-        /* Werkzeug Boxen */
+        /* Boxen */
         .tool-box { border: 1px solid #eee; padding: 10px; border-radius: 6px; background: #fff; min-height: 100px; display: flex; flex-direction: column; justify-content: space-between; }
         .tool-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px; margin-bottom: 5px; }
         .t-label { color: var(--primary); font-size: 1.2em; }
@@ -69,7 +69,6 @@
         .wiz-option-btn { padding: 25px 15px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; font-weight: bold; font-size: 1.1em; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; text-align: center; height: 100%; box-sizing: border-box;}
         .wiz-option-btn:hover, .wiz-option-btn.selected { background: #eaf2f8; border-color: var(--sec); color: var(--sec); transform: scale(1.02); }
 
-        /* Spezielles Design für Mitarbeiter-Löschen-Button */
         .btn-delete-badge {
             position: absolute; top: -8px; right: -8px; background: #e74c3c; color: white;
             width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -197,8 +196,7 @@
 
         <div id="step4" class="wizard-step">
             <div class="wizard-question">4. Wer richtet die Maschine ein?</div>
-            <div class="wiz-grid-select" id="wiz_employee_grid">
-                </div>
+            <div class="wiz-grid-select" id="wiz_employee_grid"></div>
             <input type="hidden" id="wiz_employee">
             <div class="wiz-btn-group">
                 <button class="wiz-btn wiz-btn-back" onclick="prevStep(3)">Zurück</button>
@@ -211,16 +209,31 @@
             <div class="wiz-tool-grid" id="wiz_tool_grid"></div>
             <div class="wiz-btn-group">
                 <button class="wiz-btn wiz-btn-back" onclick="prevStep(4)">Zurück</button>
-                <button class="wiz-btn wiz-btn-next" onclick="nextStep(6)">Weiter zum Foto</button>
+                <button class="wiz-btn wiz-btn-next" onclick="nextStep(6)">Weiter zur Spannung</button>
             </div>
         </div>
 
         <div id="step6" class="wizard-step">
-            <div class="wizard-question">6. Foto der Aufspannung (Optional)</div>
+            <div class="wizard-question">6. Aufspannung definieren</div>
+            <p style="font-size:1em; color:#666; margin-bottom:20px;">Welche Spannmittel werden benötigt?</p>
+            
+            <div id="wiz_clamping_list" style="text-align:left; margin-bottom:15px;">
+                </div>
+            
+            <button class="wiz-option-btn" style="width:100%; background:#eaf2f8; color:var(--sec); border-style: dashed; padding: 20px;" onclick="openClampingModal()">+ Spannmittel hinzufügen</button>
+
+            <div class="wiz-btn-group">
+                <button class="wiz-btn wiz-btn-back" onclick="prevStep(5)">Zurück</button>
+                <button class="wiz-btn wiz-btn-next" onclick="nextStep(7)">Weiter zum Foto</button>
+            </div>
+        </div>
+
+        <div id="step7" class="wizard-step">
+            <div class="wizard-question">7. Foto der Aufspannung (Optional)</div>
             <input type="file" id="wiz_photo" accept="image/*" capture="environment" class="wizard-input" style="padding: 20px;" onchange="handleWizMainPhoto(this)">
             <p id="wiz_compress_status" style="color:var(--sec); font-size:1.1em; font-weight:bold; display:none;">Bild wird komprimiert... Bitte kurz warten.</p>
             <div class="wiz-btn-group">
-                <button class="wiz-btn wiz-btn-back" onclick="prevStep(5)">Zurück</button>
+                <button class="wiz-btn wiz-btn-back" onclick="prevStep(6)">Zurück</button>
                 <button class="wiz-btn wiz-btn-next" onclick="finishWizard()">Fertigstellen</button>
             </div>
         </div>
@@ -260,13 +273,18 @@
                 </div>
             </div>
 
+            <div class="card" id="clampingCard">
+                <h2>Spannmittel</h2>
+                <div class="grid-tools" id="clampingContainer"></div>
+            </div>
+
             <div class="card">
                 <h2>Werkzeugbelegung</h2>
                 <div class="grid-tools" id="toolContainer"></div>
             </div>
 
             <div class="card">
-                <h2>Aufspannung & Foto</h2>
+                <h2>Gesamt-Foto der Aufspannung</h2>
                 <div class="form-group">
                     <img id="setupPreview" class="preview-img" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
                     <label style="margin-top:15px; color:#888;">Foto nachträglich ändern:</label>
@@ -305,7 +323,7 @@
             <label>Kategorie auswählen</label>
             <div style="display:flex; gap:10px;">
                 <select id="modalToolType" onchange="renderToolFields()" style="width:100%; font-size: 1.1em; padding: 15px;"></select>
-                <button type="button" class="nav-btn" style="padding:0 20px; font-size: 1.5em;" onclick="toggleCustomType()">+</button>
+                <button type="button" class="nav-btn" style="padding:0 20px; font-size: 1.5em;" onclick="toggleCustomType('tool')">+</button>
             </div>
             <input type="text" id="modalCustomTypeInput" class="hidden custom-input" placeholder="Eigener Name (z.B. Sonderfräser)" style="padding: 15px; margin-top:10px;">
         </div>
@@ -328,6 +346,28 @@
         </div>
 
         <button type="button" id="btnModalSave" class="btn-action" onclick="saveToolFromModal()">Speichern & Schließen</button>
+    </div>
+</div>
+
+<div id="clampingModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+            <span style="font-weight:bold; font-size:1.5em; color:var(--primary);">Spannmittel</span>
+            <span class="close-modal" onclick="closeClampingModal()">&times;</span>
+        </div>
+        
+        <div class="form-group">
+            <label>Spannart auswählen</label>
+            <div style="display:flex; gap:10px;">
+                <select id="modalClampingType" onchange="renderClampingFields()" style="width:100%; font-size: 1.1em; padding: 15px;"></select>
+                <button type="button" class="nav-btn" style="padding:0 20px; font-size: 1.5em;" onclick="toggleCustomType('clamping')">+</button>
+            </div>
+            <input type="text" id="modalCustomClampingInput" class="hidden custom-input" placeholder="Eigene Spannart (z.B. Schraubstock)" style="padding: 15px; margin-top:10px;">
+        </div>
+
+        <div id="dynamicClampingFieldsContainer" class="dynamic-fields"></div>
+
+        <button type="button" id="btnModalClampingSave" class="btn-action" onclick="saveClampingFromModal()">Hinzufügen</button>
     </div>
 </div>
 
@@ -388,12 +428,19 @@
         ]
     };
 
+    // NEU: Konfiguration für Spannmittel
+    const clampingDefinitions = {
+        "Zentrierung": [
+            { id: "size", label: "Größe / Ausführung", type: "buttons", options: ["Br. 114", "Br. 124", "Br. 134", "Br. 144", "Br. 151", "Br. 178", "Br. 183", "Br. 253"], allowCustom: true }
+        ]
+    };
+
     let currentTIndex = null;
     let currentModalImageSrc = ""; 
     let currentMainPhotoSrc = ""; 
     let wizardToolsData = {}; 
+    let wizardClampingData = []; // Array für hinzugefügte Spannmittel
     
-    // Globale Mitarbeiter-Liste (wird mit Firebase gesynct)
     window.employeeList = []; 
 
     // --- MITARBEITER SYNCHRONISATION ---
@@ -407,15 +454,12 @@
                 setDoc(empDocRef, { list: window.employeeList });
             }
             window.renderEmployeeGrid();
-        }, (error) => {
-            console.error("Mitarbeiter konnten nicht geladen werden:", error);
-        });
+        }, (error) => { console.error("Mitarbeiter konnten nicht geladen werden:", error); });
     }
 
     window.renderEmployeeGrid = () => {
         const grid = document.getElementById('wiz_employee_grid');
         grid.innerHTML = '';
-        
         window.employeeList.forEach(emp => {
             grid.innerHTML += `
                 <div style="position: relative;">
@@ -424,12 +468,7 @@
                 </div>
             `;
         });
-        
-        grid.innerHTML += `
-            <div class="wiz-option-btn" style="background:#eaf2f8; color:var(--sec); border-style: dashed;" onclick="addEmployee()">
-                <span style="font-size:1.5em; margin-right:8px;">+</span> Neu
-            </div>
-        `;
+        grid.innerHTML += `<div class="wiz-option-btn" style="background:#eaf2f8; color:var(--sec); border-style: dashed;" onclick="addEmployee()"><span style="font-size:1.5em; margin-right:8px;">+</span> Neu</div>`;
     };
 
     window.addEmployee = () => {
@@ -446,13 +485,10 @@
     window.deleteEmployee = (name, event) => {
         if (event) event.stopPropagation(); 
         const pwd = prompt(`Passwort eingeben, um '${name}' dauerhaft zu löschen:`);
-        
         if (pwd === "Gelenkwelle") {
             window.employeeList = window.employeeList.filter(e => e !== name);
             setDoc(doc(db, "config", "employees"), { list: window.employeeList });
-        } else if (pwd !== null) {
-            alert("Falsches Passwort!");
-        }
+        } else if (pwd !== null) { alert("Falsches Passwort!"); }
     };
 
     window.selectWizEmployee = (emp, btnElement) => {
@@ -462,13 +498,11 @@
         setTimeout(() => window.nextStep(5), 200);
     };
 
-
-    // --- VOLLBILD FUNKTION ---
+    // --- VOLLBILD ---
     window.requestFullScreen = () => {
         const doc = window.document;
         const docEl = doc.documentElement;
         const requestFS = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
-        
         if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
             if(requestFS) requestFS.call(docEl).catch(err => console.log("Fullscreen auto geblockt:", err));
         }
@@ -520,23 +554,23 @@
     // --- WIZARD STEUERUNG ---
     window.startWizard = () => {
         window.requestFullScreen(); 
-        
         ['wiz_artNr', 'wiz_sequence', 'wiz_machine', 'wiz_employee', 'wiz_photo'].forEach(id => document.getElementById(id).value = "");
         document.getElementById('wiz_machine_grid').innerHTML = ""; 
         document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.remove('selected'));
         document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
 
         wizardToolsData = {}; 
+        wizardClampingData = [];
         currentMainPhotoSrc = "";
         
         window.renderWizardToolGrid(); 
+        window.renderClampingList();
         window.showStep(1);
         document.getElementById('wizardOverlay').classList.remove('hidden');
     };
 
     window.switchView = (v) => {
         if(v !== 'landing') window.requestFullScreen();
-        
         document.getElementById('landing-view').classList.add('hidden');
         document.getElementById('create-view').classList.add('hidden');
         document.getElementById('search-view').classList.add('hidden');
@@ -588,44 +622,89 @@
         }
     };
 
-    window.handleWizMainPhoto = (inp) => {
-        if (inp.files && inp.files[0]) {
-            const status = document.getElementById('wiz_compress_status');
-            status.style.display = 'block';
-            window.compressImage(inp.files[0], (compressedDataUrl) => {
-                currentMainPhotoSrc = compressedDataUrl;
-                status.style.display = 'none';
-            });
-        }
+    // --- SPANNMITTEL LOGIK ---
+    window.renderClampingList = () => {
+        const list = document.getElementById('wiz_clamping_list');
+        list.innerHTML = '';
+        wizardClampingData.forEach((clamp, index) => {
+            list.innerHTML += `
+                <div class="assigned-item" style="margin-bottom:10px; padding:15px; background: white; border:1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div class="item-text" style="font-size: 1.1em;">
+                        <strong>${clamp.type}</strong><br>
+                        <span style="color:#555;">${clamp.details.join(', ')}</span>
+                    </div>
+                    <span class="btn-delete-badge" style="position:relative; top:0; right:0; margin-left:15px; width:35px; height:35px;" onclick="removeClamping(${index})">✖</span>
+                </div>
+            `;
+        });
     };
 
-    window.finishWizard = () => {
-        document.getElementById('artNr').value = document.getElementById('wiz_artNr').value;
-        document.getElementById('sequence').value = document.getElementById('wiz_sequence').value;
-        document.getElementById('machine').value = document.getElementById('wiz_machine').value;
-        document.getElementById('employee').value = document.getElementById('wiz_employee').value;
-
-        const cont = document.getElementById('toolContainer'); cont.innerHTML = '';
-        for(let i=1; i<=12; i++) {
-            const box = document.createElement('div'); box.className = 'tool-box';
-            let content = `<div class="tool-header"><span class="t-label">T${i}</span></div><div class="assigned-tools" id="tools_list_${i}">`;
-            if(wizardToolsData[i]) content += wizardToolsData[i].html;
-            content += `</div><button type="button" class="btn-slot-add no-print" onclick="openModal(${i})">+ Werkzeug anpassen</button>`;
-            box.innerHTML = content;
-            cont.appendChild(box);
-        }
-
-        if (currentMainPhotoSrc) {
-            document.getElementById('setupPreview').src = currentMainPhotoSrc;
-            document.getElementById('setupPreview').style.display = 'block';
-        } else {
-             document.getElementById('setupPreview').style.display = 'none';
-        }
-
-        window.closeWizard();
-        window.switchView('create');
+    window.removeClamping = (index) => {
+        wizardClampingData.splice(index, 1);
+        window.renderClampingList();
     };
 
+    window.openClampingModal = () => {
+        document.getElementById('modalCustomClampingInput').classList.add('hidden');
+        document.getElementById('modalClampingType').classList.remove('hidden');
+        window.renderClampingFields();
+        document.getElementById('clampingModal').classList.remove('hidden');
+    };
+    
+    window.closeClampingModal = () => document.getElementById('clampingModal').classList.add('hidden');
+
+    window.renderClampingFields = () => {
+        const type = document.getElementById('modalClampingType').value;
+        const c = document.getElementById('dynamicClampingFieldsContainer'); c.innerHTML='';
+        const isCust = !document.getElementById('modalCustomClampingInput').classList.contains('hidden');
+        
+        if(isCust) { c.innerHTML=`<div class="field-group"><label class="field-label">Details</label><input type="text" id="dyn_clamp_details" placeholder="Genaue Bezeichnung..." class="custom-input"></div>`; return; }
+
+        (clampingDefinitions[type]||[]).forEach(f => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'field-group';
+            const fid = `dyn_clamp_${f.id}`;
+            let html = `<span class="field-label">${f.label}</span>`;
+            
+            if (f.type === 'buttons') {
+                html += `<div class="preset-grid">`;
+                f.options.forEach(opt => html += `<button type="button" class="preset-btn" onclick="selectPreset('clamp_${f.id}', '${opt}', this)">${opt}</button>`);
+                html += `</div>`;
+                const inputType = f.allowCustom ? 'text' : 'hidden';
+                const ph = f.allowCustom ? '...oder eigenen Wert eingeben' : '';
+                html += `<input type="${inputType}" id="${fid}" class="custom-input" placeholder="${ph}">`;
+            } else {
+                html += `<input type="text" id="${fid}" class="custom-input" placeholder="${f.placeholder||''}">`;
+            }
+            wrapper.innerHTML = html;
+            c.appendChild(wrapper);
+        });
+    };
+
+    window.saveClampingFromModal = () => {
+        let type, details=[];
+        const isCust = !document.getElementById('modalCustomClampingInput').classList.contains('hidden');
+        if(isCust) { 
+            type = document.getElementById('modalCustomClampingInput').value || "Spannmittel"; 
+            let d = document.getElementById('dyn_clamp_details').value; 
+            if(d) details.push(d); 
+        } else { 
+            type = document.getElementById('modalClampingType').value; 
+            (clampingDefinitions[type]||[]).forEach(f=>{ 
+                const el=document.getElementById(`dyn_clamp_${f.id}`); 
+                if(el && el.value) details.push(el.value); 
+            }); 
+        }
+        
+        if(details.length === 0 && !isCust) details.push("Standard"); // Fallback
+
+        wizardClampingData.push({ type: type, details: details });
+        window.renderClampingList();
+        window.closeClampingModal();
+    };
+
+
+    // --- GEMEINSAME MODAL & UI LOGIK ---
     window.syncSlider = (id,v) => document.getElementById(id).value=v;
     window.syncNum = (id,v) => document.getElementById(id).value=v;
     window.selectPreset = (fieldId, value, btnElement) => {
@@ -640,8 +719,24 @@
         const s = document.getElementById('modalToolType'); s.innerHTML='';
         Object.keys(toolDefinitions).forEach(k => s.innerHTML+=`<option>${k}</option>`);
         window.renderToolFields();
+
+        const cs = document.getElementById('modalClampingType'); cs.innerHTML='';
+        Object.keys(clampingDefinitions).forEach(k => cs.innerHTML+=`<option>${k}</option>`);
     };
 
+    window.toggleCustomType = (modalContext) => { 
+        if(modalContext === 'tool') {
+            const i=document.getElementById('modalCustomTypeInput'), s=document.getElementById('modalToolType'); 
+            if(i.classList.contains('hidden')){i.classList.remove('hidden');s.classList.add('hidden');}else{i.classList.add('hidden');s.classList.remove('hidden');} 
+            window.renderToolFields();
+        } else {
+            const i=document.getElementById('modalCustomClampingInput'), s=document.getElementById('modalClampingType'); 
+            if(i.classList.contains('hidden')){i.classList.remove('hidden');s.classList.add('hidden');}else{i.classList.add('hidden');s.classList.remove('hidden');} 
+            window.renderClampingFields();
+        }
+    };
+
+    // --- WERKZEUG MODAL LOGIK ---
     window.renderToolFields = () => {
         const type = document.getElementById('modalToolType').value;
         const c = document.getElementById('dynamicFieldsContainer'); c.innerHTML='';
@@ -683,7 +778,6 @@
         document.getElementById('toolModal').classList.remove('hidden');
     };
     window.closeModal = () => document.getElementById('toolModal').classList.add('hidden');
-    window.toggleCustomType = () => { const i=document.getElementById('modalCustomTypeInput'), s=document.getElementById('modalToolType'); if(i.classList.contains('hidden')){i.classList.remove('hidden');s.classList.add('hidden');}else{i.classList.add('hidden');s.classList.remove('hidden');} window.renderToolFields(); };
     
     window.handleModalPhoto = (inp) => { 
         if(inp.files[0]){
@@ -700,7 +794,6 @@
 
     window.saveToolFromModal = async () => {
         if(!currentTIndex) return;
-
         const btnSave = document.getElementById('btnModalSave');
         btnSave.innerText = "Speichere...";
         btnSave.disabled = true;
@@ -741,16 +834,23 @@
         wizardToolsData[currentTIndex].details = details;
 
         window.renderWizardToolGrid();
-        if(document.getElementById('wizardOverlay').classList.contains('hidden')) {
-             const cont = document.getElementById(`tools_list_${currentTIndex}`);
-             if(cont) cont.innerHTML += itemHtml;
-        }
-
         btnSave.innerText = "Speichern & Schließen";
         btnSave.disabled = false;
         window.closeModal();
     };
 
+    // --- HAUPTFOTO & FERTIGSTELLEN ---
+    window.handleWizMainPhoto = (inp) => {
+        if (inp.files && inp.files[0]) {
+            const status = document.getElementById('wiz_compress_status');
+            status.style.display = 'block';
+            window.compressImage(inp.files[0], (compressedDataUrl) => {
+                currentMainPhotoSrc = compressedDataUrl;
+                status.style.display = 'none';
+            });
+        }
+    };
+    
     window.previewImage = (inp, id) => { 
         if(inp.files[0]){
             const status = document.getElementById('setup_compress_status');
@@ -762,6 +862,51 @@
                 status.style.display = 'none';
             });
         }
+    };
+
+    window.finishWizard = () => {
+        document.getElementById('artNr').value = document.getElementById('wiz_artNr').value;
+        document.getElementById('sequence').value = document.getElementById('wiz_sequence').value;
+        document.getElementById('machine').value = document.getElementById('wiz_machine').value;
+        document.getElementById('employee').value = document.getElementById('wiz_employee').value;
+
+        // Spannmittel rendern
+        const clampCont = document.getElementById('clampingContainer');
+        clampCont.innerHTML = '';
+        wizardClampingData.forEach(clamp => {
+            clampCont.innerHTML += `
+                <div class="tool-box">
+                    <div class="tool-header"><span class="t-label">${clamp.type}</span></div>
+                    <div class="assigned-tools">
+                        <div class="assigned-item">
+                            <div class="item-text"><strong>${clamp.type}</strong><br>${clamp.details.join(', ')}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('clampingCard').style.display = wizardClampingData.length > 0 ? 'block' : 'none';
+
+        // Werkzeuge rendern
+        const cont = document.getElementById('toolContainer'); cont.innerHTML = '';
+        for(let i=1; i<=12; i++) {
+            const box = document.createElement('div'); box.className = 'tool-box';
+            let content = `<div class="tool-header"><span class="t-label">T${i}</span></div><div class="assigned-tools" id="tools_list_${i}">`;
+            if(wizardToolsData[i]) content += wizardToolsData[i].html;
+            content += `</div><button type="button" class="btn-slot-add no-print" onclick="openModal(${i})">+ Werkzeug anpassen</button>`;
+            box.innerHTML = content;
+            cont.appendChild(box);
+        }
+
+        if (currentMainPhotoSrc) {
+            document.getElementById('setupPreview').src = currentMainPhotoSrc;
+            document.getElementById('setupPreview').style.display = 'block';
+        } else {
+             document.getElementById('setupPreview').style.display = 'none';
+        }
+
+        window.closeWizard();
+        window.switchView('create');
     };
 
     // --- FIREBASE SPEICHERN ---
@@ -794,6 +939,7 @@
                 employee: emp,
                 photoUrl: mainPhotoUrl,
                 toolsHtml: document.getElementById('toolContainer').innerHTML,
+                clampingHtml: document.getElementById('clampingContainer').innerHTML, // NEU
                 createdAt: serverTimestamp(),
                 dateString: new Date().toLocaleDateString()
             });
@@ -803,9 +949,11 @@
             
             document.getElementById('setupForm').reset();
             document.getElementById('toolContainer').innerHTML = '';
+            document.getElementById('clampingContainer').innerHTML = '';
             document.getElementById('setupPreview').style.display = 'none';
             currentMainPhotoSrc = "";
             wizardToolsData = {};
+            wizardClampingData = [];
 
         } catch (error) {
             console.error("Fehler beim Speichern:", error);
@@ -827,9 +975,7 @@
                 const r = doc.data();
                 tb.innerHTML += `<tr><td>${r.dateString || '-'}</td><td>${r.artNr}</td><td>${r.machine}</td><td>${r.employee}</td></tr>`;
             });
-        }, (error) => {
-            console.error("Fehler beim Laden der Daten.", error);
-        });
+        }, (error) => { console.error("Fehler beim Laden der Daten.", error); });
     }
 
     window.filterTable = () => { const f=document.getElementById('searchInput').value.toUpperCase(), tr=document.getElementById('tableBody').rows; for(let i=0;i<tr.length;i++) tr[i].style.display=tr[i].innerText.toUpperCase().includes(f)?'':'none'; };
@@ -837,7 +983,7 @@
     // Start
     window.initModalDropdown();
     initRealtimeUpdates();
-    initEmployeeSync(); // Startet die Live-Synchro der Mitarbeiter
+    initEmployeeSync(); 
     window.switchView('landing');
 
 </script>
