@@ -161,6 +161,11 @@
         <div id="step1" class="wizard-step active">
             <div class="wizard-question">1. Wie lautet die Artikelnummer?</div>
             <input type="text" id="wiz_artNr" class="wizard-input" placeholder="z.B. 123-456-789">
+            
+            <div style="text-align: right; margin-top: -10px; margin-bottom: 20px;">
+                <button type="button" onclick="document.getElementById('wiz_artNr').value=''; document.getElementById('wiz_artNr').focus();" style="background: none; border: none; color: #e74c3c; font-weight: bold; font-size: 1.1em; cursor: pointer; padding: 10px;">✖ Feld leeren</button>
+            </div>
+
             <div class="wiz-btn-group">
                 <button class="wiz-btn wiz-btn-back" onclick="closeWizard()">Abbrechen</button>
                 <button class="wiz-btn wiz-btn-next" onclick="nextStep(2)">Weiter</button>
@@ -391,14 +396,13 @@
     // Globale Mitarbeiter-Liste (wird mit Firebase gesynct)
     window.employeeList = []; 
 
-    // --- MITARBEITER SYNCHRONISATION (V19) ---
+    // --- MITARBEITER SYNCHRONISATION ---
     function initEmployeeSync() {
         const empDocRef = doc(db, "config", "employees");
         onSnapshot(empDocRef, (docSnap) => {
             if (docSnap.exists()) {
                 window.employeeList = docSnap.data().list || [];
             } else {
-                // Standardwerte setzen, wenn die DB noch leer ist
                 window.employeeList = ["Lange", "Oks", "Saric"];
                 setDoc(empDocRef, { list: window.employeeList });
             }
@@ -421,7 +425,6 @@
             `;
         });
         
-        // Plus Button zum Hinzufügen
         grid.innerHTML += `
             <div class="wiz-option-btn" style="background:#eaf2f8; color:var(--sec); border-style: dashed;" onclick="addEmployee()">
                 <span style="font-size:1.5em; margin-right:8px;">+</span> Neu
@@ -435,14 +438,13 @@
             const cleanName = name.trim();
             if(!window.employeeList.includes(cleanName)) {
                 window.employeeList.push(cleanName);
-                // Speichern in Firebase (löst automatisch einen UI Refresh auf allen Geräten aus)
                 setDoc(doc(db, "config", "employees"), { list: window.employeeList });
             }
         }
     };
 
     window.deleteEmployee = (name, event) => {
-        if (event) event.stopPropagation(); // Verhindert, dass der Button darunter ausgelöst wird
+        if (event) event.stopPropagation(); 
         const pwd = prompt(`Passwort eingeben, um '${name}' dauerhaft zu löschen:`);
         
         if (pwd === "Gelenkwelle") {
@@ -455,7 +457,6 @@
 
     window.selectWizEmployee = (emp, btnElement) => {
         document.getElementById('wiz_employee').value = emp;
-        // Alle normalen Option Buttons des Grids suchen (ohne den Wrapper)
         document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
         btnElement.classList.add('selected');
         setTimeout(() => window.nextStep(5), 200);
@@ -523,7 +524,6 @@
         ['wiz_artNr', 'wiz_sequence', 'wiz_machine', 'wiz_employee', 'wiz_photo'].forEach(id => document.getElementById(id).value = "");
         document.getElementById('wiz_machine_grid').innerHTML = ""; 
         document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.remove('selected'));
-        // Mitarbeiter Buttons zurücksetzen
         document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
 
         wizardToolsData = {}; 
