@@ -112,7 +112,7 @@
 
         /* Helpers */
         .hidden { display: none !important; }
-        .btn-action { background: #27ae60; color: white; border: none; padding: 18px; width: 100%; font-size: 1.2em; font-weight: bold; cursor: pointer; margin-top: 20px; border-radius: 8px; transition: 0.2s; }
+        .btn-action { color: white; border: none; padding: 18px; width: 100%; font-size: 1.2em; font-weight: bold; cursor: pointer; border-radius: 8px; transition: 0.2s; }
         .btn-action:disabled { background: #95a5a6; cursor: not-allowed; }
 
         /* --- SCHWEBENDER VOLLBILD BUTTON --- */
@@ -132,13 +132,14 @@
         th { background: #f4f7f6; }
 
         /* Leseansicht Besonderheiten */
-        #detail-view .btn-slot-add { display: none !important; } /* Ausblenden der "Werkzeug anpassen" Buttons in der Leseansicht */
+        #detail-view .btn-slot-add { display: none !important; }
         .bg-light { background: #fdfdfd; padding: 12px; border: 1px solid #eee; border-radius: 6px; font-weight: bold; font-size: 1.1em; color: var(--primary); }
 
         /* Tablet Media Queries */
         @media (max-width: 800px) {
             .wiz-tool-grid { grid-template-columns: repeat(2, 1fr); }
             .grid-2 { grid-template-columns: 1fr; }
+            .flex-mobile { flex-direction: column; }
         }
 
         /* Print */
@@ -154,7 +155,6 @@
             input, select { border: none; background: transparent; padding: 0; font-weight: bold; appearance: none; }
             img.preview-img { max-width: 150px; max-height: 150px; }
             
-            /* Zeigt die jeweils geöffnete Ansicht (Resultat oder Detail) beim Drucken an */
             #create-view:not(.hidden), #detail-view:not(.hidden) { display: block !important; }
             #create-view.hidden, #detail-view.hidden { display: none !important; }
         }
@@ -290,7 +290,11 @@
                 </div>
             </div>
 
-            <button type="button" id="btnProcess" class="btn-action no-print" onclick="processAndSend()">Speichern & Als PDF Senden</button>
+            <div style="display:flex; gap: 15px; margin-top:20px;" class="no-print flex-mobile">
+                <button type="button" class="btn-action" style="flex: 1; background: #34495e;" onclick="window.print()">1. Als PDF Speichern</button>
+                <button type="button" id="btnProcess" class="btn-action" style="flex: 1; background: var(--success);" onclick="processAndSend()">2. Speichern & E-Mail senden</button>
+            </div>
+            <p class="no-print" style="text-align:center; color:#7f8c8d; font-size:0.9em; margin-top:10px;">Bitte lade das Dokument zuerst über "Als PDF Speichern" herunter, bevor du die E-Mail öffnest.</p>
         </form>
     </div>
 
@@ -337,9 +341,10 @@
             </div>
         </div>
 
-        <div style="display:flex; gap: 15px; margin-top:20px;" class="no-print">
+        <div style="display:flex; gap: 15px; margin-top:20px;" class="no-print flex-mobile">
             <button class="nav-btn" onclick="switchView('search')" style="flex: 1; background: #95a5a6; padding: 18px; font-size: 1.2em;">Zurück zur Liste</button>
-            <button class="nav-btn" onclick="window.print()" style="flex: 1; background: var(--success); padding: 18px; font-size: 1.2em;">Als PDF Drucken</button>
+            <button class="nav-btn" onclick="window.print()" style="flex: 1; background: #34495e; padding: 18px; font-size: 1.2em;">Als PDF Speichern</button>
+            <button class="nav-btn" onclick="sendMailFromDetail()" style="flex: 1; background: var(--success); padding: 18px; font-size: 1.2em;">Als E-Mail senden</button>
         </div>
     </div>
 </div>
@@ -377,7 +382,7 @@
             <img id="modalToolPreview" style="width:100%; height:200px; background:#eee; display:none; object-fit:contain; border-radius: 8px; margin-top:10px; border: 1px solid #ccc;">
         </div>
 
-        <button type="button" id="btnModalSave" class="btn-action" onclick="saveToolFromModal()">Speichern & Schließen</button>
+        <button type="button" id="btnModalSave" class="btn-action" onclick="saveToolFromModal()" style="background: var(--success);">Speichern & Schließen</button>
     </div>
 </div>
 
@@ -399,7 +404,7 @@
 
         <div id="dynamicClampingFieldsContainer" class="dynamic-fields"></div>
 
-        <button type="button" id="btnModalClampingSave" class="btn-action" onclick="saveClampingFromModal()">Hinzufügen</button>
+        <button type="button" id="btnModalClampingSave" class="btn-action" onclick="saveClampingFromModal()" style="background: var(--success);">Hinzufügen</button>
     </div>
 </div>
 
@@ -479,7 +484,7 @@
     let wizardClampingData = []; 
     
     window.employeeList = []; 
-    window.savedSetups = {}; // V23: Globales Objekt für alle geladenen Rüstblätter (Archiv)
+    window.savedSetups = {}; 
 
     // --- MITARBEITER SYNCHRONISATION ---
     function initEmployeeSync() {
@@ -607,7 +612,6 @@
         document.getElementById('wizardOverlay').classList.remove('hidden');
     };
 
-    // V23: Ansichts-Manager angepasst für Leseansicht (detail)
     window.switchView = (v) => {
         if(v !== 'landing') window.requestFullScreen();
         document.getElementById('landing-view').classList.add('hidden');
@@ -946,7 +950,7 @@
         window.switchView('create');
     };
 
-    // --- FIREBASE SPEICHERN ---
+    // --- FIREBASE SPEICHERN & E-MAIL ---
     window.processAndSend = async () => {
         const art = document.getElementById('artNr').value;
         const seq = document.getElementById('sequence').value;
@@ -981,8 +985,12 @@
                 dateString: new Date().toLocaleDateString()
             });
 
-            alert("Erfolgreich gespeichert!");
-            window.print(); 
+            // V24: E-Mail Client öffnen
+            const subject = encodeURIComponent(`Neues Rüstblatt: Artikel ${art}`);
+            const body = encodeURIComponent(`Hallo,\n\nanbei das neue Rüstblatt für Artikel ${art} auf der Maschine ${mach}.\n\n(Bitte das PDF manuell als Anhang hinzufügen)\n\nViele Grüße,\n${emp}`);
+            window.location.href = `mailto:d.wolf@hohn-cardan.de?subject=${subject}&body=${body}`;
+            
+            alert("Erfolgreich in der Cloud gespeichert!");
             
             document.getElementById('setupForm').reset();
             document.getElementById('toolContainer').innerHTML = '';
@@ -996,32 +1004,38 @@
             console.error("Fehler beim Speichern:", error);
             alert("Fehler beim Speichern. Sind die Firebase Regeln auf Testmodus?");
         } finally {
-            btn.innerText = "Speichern & Als PDF Senden";
+            btn.innerText = "2. Speichern & E-Mail senden";
             btn.disabled = false;
             window.switchView('landing');
         }
     };
 
-    // --- V23: DETAIL ANSICHT ÖFFNEN ---
+    // V24: E-Mail für Archiv-Ansicht
+    window.sendMailFromDetail = () => {
+        const art = document.getElementById('det_artNr').innerText;
+        const mach = document.getElementById('det_machine').innerText;
+        const emp = document.getElementById('det_employee').innerText;
+        
+        const subject = encodeURIComponent(`Rüstblatt: Artikel ${art}`);
+        const body = encodeURIComponent(`Hallo,\n\nanbei das angeforderte Rüstblatt für Artikel ${art} auf der Maschine ${mach}.\n\n(Bitte das PDF manuell als Anhang hinzufügen)\n\nViele Grüße,\n${emp}`);
+        window.location.href = `mailto:d.wolf@hohn-cardan.de?subject=${subject}&body=${body}`;
+    };
+
     window.openDetailView = (docId) => {
         const data = window.savedSetups[docId];
         if(!data) return;
 
-        // Fülle die Felder der Lese-Ansicht
         document.getElementById('det_artNr').innerText = data.artNr;
         document.getElementById('det_sequence').innerText = data.sequence;
         document.getElementById('det_machine').innerText = data.machine;
         document.getElementById('det_employee').innerText = data.employee;
 
-        // Spannmittel
         const clampCont = document.getElementById('det_clampingContainer');
         clampCont.innerHTML = data.clampingHtml || '<p style="color:#888;">Keine Spannmittel hinterlegt.</p>';
         document.getElementById('det_clampingCard').style.display = (data.clampingHtml && data.clampingHtml.trim() !== '') ? 'block' : 'none';
 
-        // Werkzeuge
         document.getElementById('det_toolContainer').innerHTML = data.toolsHtml || '<p style="color:#888;">Keine Werkzeuge hinterlegt.</p>';
 
-        // Foto
         const img = document.getElementById('det_setupPreview');
         if(data.photoUrl) {
             img.src = data.photoUrl;
@@ -1040,14 +1054,13 @@
     function initRealtimeUpdates() {
         const q = query(collection(db, "ruestblaetter"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
-            window.savedSetups = {}; // Reset global cache
+            window.savedSetups = {}; 
             const tb = document.getElementById('tableBody');
             tb.innerHTML = '';
             snapshot.forEach((doc) => {
                 const r = doc.data();
-                window.savedSetups[doc.id] = r; // Im Cache speichern
+                window.savedSetups[doc.id] = r; 
                 
-                // V23: Die Tabelle klickbar machen
                 tb.innerHTML += `
                     <tr onclick="openDetailView('${doc.id}')" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.background='#f0f8ff'" onmouseout="this.style.background='transparent'">
                         <td>${r.dateString || '-'}</td>
