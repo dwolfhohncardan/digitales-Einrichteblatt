@@ -215,7 +215,7 @@
 
         <div id="step6" class="wizard-step">
             <div class="wizard-question">6. Aufspannung definieren</div>
-            <p style="font-size:1em; color:#666; margin-bottom:20px;">Welche Spannmittel werden benötigt?</p>
+            <p style="font-size:1em; color:#666; margin-bottom:20px;">Welche Spannmittel / Backen werden benötigt?</p>
             
             <div id="wiz_clamping_list" style="text-align:left; margin-bottom:15px;">
                 </div>
@@ -224,17 +224,7 @@
 
             <div class="wiz-btn-group">
                 <button class="wiz-btn wiz-btn-back" onclick="prevStep(5)">Zurück</button>
-                <button class="wiz-btn wiz-btn-next" onclick="nextStep(7)">Weiter zum Foto</button>
-            </div>
-        </div>
-
-        <div id="step7" class="wizard-step">
-            <div class="wizard-question">7. Foto der Aufspannung (Optional)</div>
-            <input type="file" id="wiz_photo" accept="image/*" capture="environment" class="wizard-input" style="padding: 20px;" onchange="handleWizMainPhoto(this)">
-            <p id="wiz_compress_status" style="color:var(--sec); font-size:1.1em; font-weight:bold; display:none;">Bild wird komprimiert... Bitte kurz warten.</p>
-            <div class="wiz-btn-group">
-                <button class="wiz-btn wiz-btn-back" onclick="prevStep(6)">Zurück</button>
-                <button class="wiz-btn wiz-btn-next" onclick="finishWizard()">Fertigstellen</button>
+                <button class="wiz-btn wiz-btn-next" style="background: var(--success);" onclick="finishWizard()">Fertigstellen</button>
             </div>
         </div>
     </div>
@@ -274,7 +264,7 @@
             </div>
 
             <div class="card" id="clampingCard">
-                <h2>Spannmittel</h2>
+                <h2>Spannmittel & Backen</h2>
                 <div class="grid-tools" id="clampingContainer"></div>
             </div>
 
@@ -287,7 +277,7 @@
                 <h2>Gesamt-Foto der Aufspannung</h2>
                 <div class="form-group">
                     <img id="setupPreview" class="preview-img" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
-                    <label style="margin-top:15px; color:#888;">Foto nachträglich ändern:</label>
+                    <label style="margin-top:15px; color:#888;">Foto hinzufügen / ändern:</label>
                     <input type="file" id="setupPhoto" accept="image/*" capture="environment" class="wizard-input" style="padding: 15px;" onchange="previewImage(this, 'setupPreview')">
                     <p id="setup_compress_status" style="color:var(--sec); font-weight:bold; display:none;">Bild wird komprimiert...</p>
                 </div>
@@ -357,7 +347,7 @@
         </div>
         
         <div class="form-group">
-            <label>Spannart auswählen</label>
+            <label>Spannart / Backen auswählen</label>
             <div style="display:flex; gap:10px;">
                 <select id="modalClampingType" onchange="renderClampingFields()" style="width:100%; font-size: 1.1em; padding: 15px;"></select>
                 <button type="button" class="nav-btn" style="padding:0 20px; font-size: 1.5em;" onclick="toggleCustomType('clamping')">+</button>
@@ -428,10 +418,16 @@
         ]
     };
 
-    // NEU: Konfiguration für Spannmittel
+    // NEU: Konfiguration für Spannmittel (Inkl. Spannbacken)
     const clampingDefinitions = {
         "Zentrierung": [
             { id: "size", label: "Größe / Ausführung", type: "buttons", options: ["Br. 114", "Br. 124", "Br. 134", "Br. 144", "Br. 151", "Br. 178", "Br. 183", "Br. 253"], allowCustom: true }
+        ],
+        "Spannbacken": [
+            { id: "art", label: "Backen-Art", type: "buttons", options: ["Harte Backen", "Weiche Backen", "Krallenbacken"], allowCustom: true },
+            { id: "richtung", label: "Spannrichtung", type: "buttons", options: ["Außenspannung", "Innenspannung"], allowCustom: false },
+            { id: "durchmesser", label: "Spann-Ø (mm)", type: "text", placeholder: "z.B. 65" },
+            { id: "druck", label: "Spanndruck", type: "buttons", options: ["10 bar", "15 bar", "20 bar", "25 bar", "30 bar"], allowCustom: true }
         ]
     };
 
@@ -439,7 +435,7 @@
     let currentModalImageSrc = ""; 
     let currentMainPhotoSrc = ""; 
     let wizardToolsData = {}; 
-    let wizardClampingData = []; // Array für hinzugefügte Spannmittel
+    let wizardClampingData = []; 
     
     window.employeeList = []; 
 
@@ -554,7 +550,8 @@
     // --- WIZARD STEUERUNG ---
     window.startWizard = () => {
         window.requestFullScreen(); 
-        ['wiz_artNr', 'wiz_sequence', 'wiz_machine', 'wiz_employee', 'wiz_photo'].forEach(id => document.getElementById(id).value = "");
+        // V22: Kein wiz_photo mehr zum clearen
+        ['wiz_artNr', 'wiz_sequence', 'wiz_machine', 'wiz_employee'].forEach(id => document.getElementById(id).value = "");
         document.getElementById('wiz_machine_grid').innerHTML = ""; 
         document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.remove('selected'));
         document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
@@ -647,6 +644,7 @@
     window.openClampingModal = () => {
         document.getElementById('modalCustomClampingInput').classList.add('hidden');
         document.getElementById('modalClampingType').classList.remove('hidden');
+        document.getElementById('modalClampingType').selectedIndex=0;
         window.renderClampingFields();
         document.getElementById('clampingModal').classList.remove('hidden');
     };
@@ -692,17 +690,23 @@
             type = document.getElementById('modalClampingType').value; 
             (clampingDefinitions[type]||[]).forEach(f=>{ 
                 const el=document.getElementById(`dyn_clamp_${f.id}`); 
-                if(el && el.value) details.push(el.value); 
+                if(el && el.value) {
+                    let val = el.value;
+                    // Formatierung für bessere Lesbarkeit auf dem PDF
+                    if(f.id === 'durchmesser') details.push(`Spann-Ø: ${val}mm`);
+                    else if(f.id === 'druck' && !val.includes('bar')) details.push(`Druck: ${val} bar`);
+                    else if(f.id === 'druck') details.push(`Druck: ${val}`);
+                    else details.push(val); 
+                }
             }); 
         }
         
-        if(details.length === 0 && !isCust) details.push("Standard"); // Fallback
+        if(details.length === 0 && !isCust) details.push("Standard");
 
         wizardClampingData.push({ type: type, details: details });
         window.renderClampingList();
         window.closeClampingModal();
     };
-
 
     // --- GEMEINSAME MODAL & UI LOGIK ---
     window.syncSlider = (id,v) => document.getElementById(id).value=v;
@@ -840,17 +844,6 @@
     };
 
     // --- HAUPTFOTO & FERTIGSTELLEN ---
-    window.handleWizMainPhoto = (inp) => {
-        if (inp.files && inp.files[0]) {
-            const status = document.getElementById('wiz_compress_status');
-            status.style.display = 'block';
-            window.compressImage(inp.files[0], (compressedDataUrl) => {
-                currentMainPhotoSrc = compressedDataUrl;
-                status.style.display = 'none';
-            });
-        }
-    };
-    
     window.previewImage = (inp, id) => { 
         if(inp.files[0]){
             const status = document.getElementById('setup_compress_status');
@@ -939,7 +932,7 @@
                 employee: emp,
                 photoUrl: mainPhotoUrl,
                 toolsHtml: document.getElementById('toolContainer').innerHTML,
-                clampingHtml: document.getElementById('clampingContainer').innerHTML, // NEU
+                clampingHtml: document.getElementById('clampingContainer').innerHTML,
                 createdAt: serverTimestamp(),
                 dateString: new Date().toLocaleDateString()
             });
