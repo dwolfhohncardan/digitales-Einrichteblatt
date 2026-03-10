@@ -8,6 +8,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>CNC Rüstblatt Dashboard</title>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
         :root { --primary: #2c3e50; --sec: #3498db; --bg: #f4f7f6; --white: #fff; --accent: #e67e22; --success: #27ae60; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; touch-action: manipulation; }
@@ -260,41 +262,40 @@
 
     <div id="create-view" class="hidden">
         <form id="setupForm">
-            <div class="card">
-                <h2>Allgemeine Daten</h2>
-                <div class="grid-2">
-                    <div class="form-group"><label>Artikelnummer</label><input type="text" id="artNr" required></div>
-                    <div class="form-group"><label>Arbeitsfolge</label><input type="text" id="sequence" readonly></div>
-                    <div class="form-group"><label>Maschine</label><input type="text" id="machine" readonly></div>
-                    <div class="form-group"><label>Mitarbeiter</label><input type="text" id="employee" required></div>
+            <div id="printableArea" style="background:var(--bg); padding-bottom:10px;">
+                <div class="card">
+                    <h2>Allgemeine Daten</h2>
+                    <div class="grid-2">
+                        <div class="form-group"><label>Artikelnummer</label><input type="text" id="artNr" required></div>
+                        <div class="form-group"><label>Arbeitsfolge</label><input type="text" id="sequence" readonly></div>
+                        <div class="form-group"><label>Maschine</label><input type="text" id="machine" readonly></div>
+                        <div class="form-group"><label>Mitarbeiter</label><input type="text" id="employee" required></div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="card" id="clampingCard">
-                <h2>Spannmittel & Backen</h2>
-                <div class="grid-tools" id="clampingContainer"></div>
-            </div>
-
-            <div class="card">
-                <h2>Werkzeugbelegung</h2>
-                <div class="grid-tools" id="toolContainer"></div>
-            </div>
-
-            <div class="card">
-                <h2>Gesamt-Foto der Aufspannung</h2>
-                <div class="form-group">
-                    <img id="setupPreview" class="preview-img" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
-                    <label style="margin-top:15px; color:#888;">Foto hinzufügen / ändern:</label>
-                    <input type="file" id="setupPhoto" accept="image/*" capture="environment" class="wizard-input" style="padding: 15px;" onchange="previewImage(this, 'setupPreview')">
-                    <p id="setup_compress_status" style="color:var(--sec); font-weight:bold; display:none;">Bild wird komprimiert...</p>
+                <div class="card" id="clampingCard">
+                    <h2>Spannmittel & Backen</h2>
+                    <div class="grid-tools" id="clampingContainer"></div>
                 </div>
-            </div>
 
-            <div style="display:flex; gap: 15px; margin-top:20px;" class="no-print flex-mobile">
-                <button type="button" class="btn-action" style="flex: 1; background: #34495e;" onclick="window.print()">1. Als PDF Speichern</button>
-                <button type="button" id="btnProcess" class="btn-action" style="flex: 1; background: var(--success);" onclick="processAndSend()">2. Speichern & E-Mail senden</button>
+                <div class="card">
+                    <h2>Werkzeugbelegung</h2>
+                    <div class="grid-tools" id="toolContainer"></div>
+                </div>
+
+                <div class="card">
+                    <h2>Gesamt-Foto der Aufspannung</h2>
+                    <div class="form-group">
+                        <img id="setupPreview" class="preview-img" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
+                        <label class="no-print" style="margin-top:15px; color:#888;">Foto hinzufügen / ändern:</label>
+                        <input type="file" id="setupPhoto" accept="image/*" capture="environment" class="wizard-input no-print" style="padding: 15px;" onchange="previewImage(this, 'setupPreview')">
+                        <p id="setup_compress_status" class="no-print" style="color:var(--sec); font-weight:bold; display:none;">Bild wird komprimiert...</p>
+                    </div>
+                </div>
+            </div> <div style="margin-top:20px;" class="no-print">
+                <button type="button" id="btnProcess" class="btn-action" style="background: var(--success);" onclick="processAndSendWithPDF()">Speichern & Automatisch als E-Mail senden</button>
+                <p style="text-align:center; color:#7f8c8d; font-size:0.9em; margin-top:10px;">Beim Klick wird das Rüstblatt in der Cloud gespeichert und vollautomatisch als PDF an d.wolf gesendet.</p>
             </div>
-            <p class="no-print" style="text-align:center; color:#7f8c8d; font-size:0.9em; margin-top:10px;">Bitte lade das Dokument zuerst über "Als PDF Speichern" herunter, bevor du die E-Mail öffnest.</p>
         </form>
     </div>
 
@@ -314,37 +315,38 @@
     </div>
 
     <div id="detail-view" class="hidden">
-        <div class="card">
-            <h2>Allgemeine Daten</h2>
-            <div class="grid-2">
-                <div class="form-group"><label>Artikelnummer</label><div id="det_artNr" class="bg-light"></div></div>
-                <div class="form-group"><label>Arbeitsfolge</label><div id="det_sequence" class="bg-light"></div></div>
-                <div class="form-group"><label>Maschine</label><div id="det_machine" class="bg-light"></div></div>
-                <div class="form-group"><label>Mitarbeiter</label><div id="det_employee" class="bg-light"></div></div>
+        <div id="printableDetailArea" style="background:var(--bg); padding-bottom:10px;">
+            <div class="card">
+                <h2>Allgemeine Daten</h2>
+                <div class="grid-2">
+                    <div class="form-group"><label>Artikelnummer</label><div id="det_artNr" class="bg-light"></div></div>
+                    <div class="form-group"><label>Arbeitsfolge</label><div id="det_sequence" class="bg-light"></div></div>
+                    <div class="form-group"><label>Maschine</label><div id="det_machine" class="bg-light"></div></div>
+                    <div class="form-group"><label>Mitarbeiter</label><div id="det_employee" class="bg-light"></div></div>
+                </div>
             </div>
-        </div>
 
-        <div class="card" id="det_clampingCard">
-            <h2>Spannmittel & Backen</h2>
-            <div class="grid-tools" id="det_clampingContainer"></div>
-        </div>
+            <div class="card" id="det_clampingCard">
+                <h2>Spannmittel & Backen</h2>
+                <div class="grid-tools" id="det_clampingContainer"></div>
+            </div>
 
-        <div class="card">
-            <h2>Werkzeugbelegung</h2>
-            <div class="grid-tools" id="det_toolContainer"></div>
-        </div>
+            <div class="card">
+                <h2>Werkzeugbelegung</h2>
+                <div class="grid-tools" id="det_toolContainer"></div>
+            </div>
 
-        <div class="card" id="det_photoCard">
-            <h2>Gesamt-Foto der Aufspannung</h2>
-            <div class="form-group">
-                <img id="det_setupPreview" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
+            <div class="card" id="det_photoCard">
+                <h2>Gesamt-Foto der Aufspannung</h2>
+                <div class="form-group">
+                    <img id="det_setupPreview" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
+                </div>
             </div>
         </div>
 
         <div style="display:flex; gap: 15px; margin-top:20px;" class="no-print flex-mobile">
             <button class="nav-btn" onclick="switchView('search')" style="flex: 1; background: #95a5a6; padding: 18px; font-size: 1.2em;">Zurück zur Liste</button>
-            <button class="nav-btn" onclick="window.print()" style="flex: 1; background: #34495e; padding: 18px; font-size: 1.2em;">Als PDF Speichern</button>
-            <button class="nav-btn" onclick="sendMailFromDetail()" style="flex: 1; background: var(--success); padding: 18px; font-size: 1.2em;">Als E-Mail senden</button>
+            <button class="nav-btn" id="btnResend" onclick="resendMailFromDetail()" style="flex: 1; background: var(--success); padding: 18px; font-size: 1.2em;">Erneut als E-Mail senden</button>
         </div>
     </div>
 </div>
@@ -417,6 +419,9 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+    // --- GOOGLE SCRIPT URL EINGETRAGEN ---
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmFtOTuUMz7KuHF7jGWsSeRIwYMOmIH9bwTtMxq1_j9_nCDke4f3F80KS67nIZVrIA0g/exec";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDJueI6GEUCSKhHOC8CHZlLmDDNylmohkk",
@@ -950,19 +955,25 @@
         window.switchView('create');
     };
 
-    // --- FIREBASE SPEICHERN & E-MAIL ---
-    window.processAndSend = async () => {
+    // --- FIREBASE SPEICHERN & PDF E-MAIL VIA GOOGLE SCRIPT ---
+    window.processAndSendWithPDF = async () => {
         const art = document.getElementById('artNr').value;
         const seq = document.getElementById('sequence').value;
         const mach = document.getElementById('machine').value;
         const emp = document.getElementById('employee').value;
 
         if(!art || !emp) return alert("Artikelnummer und Mitarbeiter fehlen!");
+        
+        if(GOOGLE_SCRIPT_URL === "DEINE_GOOGLE_SCRIPT_URL_HIER") {
+            alert("BITTE ZUERST DIE GOOGLE SCRIPT URL GANZ OBEN IM CODE EINTRAGEN!");
+            return;
+        }
 
         const btn = document.getElementById('btnProcess');
-        btn.innerText = "Speichert in Cloud...";
+        btn.innerText = "Bitte warten... PDF wird erzeugt & gesendet";
         btn.disabled = true;
 
+        // 1. Firebase speichern (inkl. Bild hochladen)
         let mainPhotoUrl = "";
         if (currentMainPhotoSrc) {
             try {
@@ -974,10 +985,7 @@
 
         try {
             await addDoc(collection(db, "ruestblaetter"), {
-                artNr: art,
-                sequence: seq,
-                machine: mach,
-                employee: emp,
+                artNr: art, sequence: seq, machine: mach, employee: emp,
                 photoUrl: mainPhotoUrl,
                 toolsHtml: document.getElementById('toolContainer').innerHTML,
                 clampingHtml: document.getElementById('clampingContainer').innerHTML,
@@ -985,12 +993,41 @@
                 dateString: new Date().toLocaleDateString()
             });
 
-            // V24: E-Mail Client öffnen
-            const subject = encodeURIComponent(`Neues Rüstblatt: Artikel ${art}`);
-            const body = encodeURIComponent(`Hallo,\n\nanbei das neue Rüstblatt für Artikel ${art} auf der Maschine ${mach}.\n\n(Bitte das PDF manuell als Anhang hinzufügen)\n\nViele Grüße,\n${emp}`);
-            window.location.href = `mailto:d.wolf@hohn-cardan.de?subject=${subject}&body=${body}`;
+            // 2. Ansicht für PDF vorbereiten (Knöpfe ausblenden)
+            const addButtons = document.querySelectorAll('.btn-slot-add');
+            addButtons.forEach(b => b.style.display = 'none');
+            document.querySelectorAll('.no-print').forEach(b => b.style.display = 'none');
+
+            // 3. PDF generieren
+            const element = document.getElementById('printableArea');
+            const opt = {
+                margin: 5,
+                filename: `Ruestblatt_${art}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            const pdfBase64Url = await html2pdf().set(opt).from(element).outputPdf('datauristring');
+            const base64Data = pdfBase64Url.split(',')[1];
+
+            // Buttons wieder einblenden
+            addButtons.forEach(b => b.style.display = 'block');
+            document.querySelectorAll('.no-print').forEach(b => b.style.display = '');
+
+            // 4. PDF an Google Script senden
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    pdfBase64: base64Data,
+                    artNr: art,
+                    machine: mach,
+                    employee: emp
+                })
+            });
             
-            alert("Erfolgreich in der Cloud gespeichert!");
+            alert("Erfolgreich in der Cloud gespeichert und als PDF-Mail an d.wolf versendet!");
             
             document.getElementById('setupForm').reset();
             document.getElementById('toolContainer').innerHTML = '';
@@ -1001,24 +1038,46 @@
             wizardClampingData = [];
 
         } catch (error) {
-            console.error("Fehler beim Speichern:", error);
-            alert("Fehler beim Speichern. Sind die Firebase Regeln auf Testmodus?");
+            console.error("Fehler beim Speichern/Senden:", error);
+            alert("Es gab einen Fehler. Bitte Internetverbindung prüfen.");
         } finally {
-            btn.innerText = "2. Speichern & E-Mail senden";
+            btn.innerText = "Speichern & Automatisch als E-Mail senden";
             btn.disabled = false;
             window.switchView('landing');
         }
     };
 
-    // V24: E-Mail für Archiv-Ansicht
-    window.sendMailFromDetail = () => {
+    // PDF im Archiv generieren und versenden
+    window.resendMailFromDetail = async () => {
+        if(GOOGLE_SCRIPT_URL === "DEINE_GOOGLE_SCRIPT_URL_HIER") return alert("URL fehlt!");
+        
+        const btn = document.getElementById('btnResend');
+        btn.innerText = "Sende E-Mail...";
+        btn.disabled = true;
+
         const art = document.getElementById('det_artNr').innerText;
         const mach = document.getElementById('det_machine').innerText;
         const emp = document.getElementById('det_employee').innerText;
-        
-        const subject = encodeURIComponent(`Rüstblatt: Artikel ${art}`);
-        const body = encodeURIComponent(`Hallo,\n\nanbei das angeforderte Rüstblatt für Artikel ${art} auf der Maschine ${mach}.\n\n(Bitte das PDF manuell als Anhang hinzufügen)\n\nViele Grüße,\n${emp}`);
-        window.location.href = `mailto:d.wolf@hohn-cardan.de?subject=${subject}&body=${body}`;
+
+        document.querySelectorAll('.no-print').forEach(b => b.style.display = 'none');
+
+        try {
+            const element = document.getElementById('printableDetailArea');
+            const opt = { margin: 5, filename: `Ruestblatt_${art}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            const pdfBase64Url = await html2pdf().set(opt).from(element).outputPdf('datauristring');
+            const base64Data = pdfBase64Url.split(',')[1];
+
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ pdfBase64: base64Data, artNr: art, machine: mach, employee: emp })
+            });
+            alert("Das Rüstblatt wurde erfolgreich erneut per E-Mail gesendet!");
+        } catch(e) { alert("Fehler beim Versenden der Mail!"); }
+
+        document.querySelectorAll('.no-print').forEach(b => b.style.display = '');
+        btn.innerText = "Erneut als E-Mail senden";
+        btn.disabled = false;
     };
 
     window.openDetailView = (docId) => {
