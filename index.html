@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNC Rüstblatt Dashboard</title>
+    <style>
+        :root { --primary: #2c3e50; --sec: #3498db; --bg: #f4f7f6; --white: #fff; --accent: #e67e22; --success: #27ae60; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; }
+        
+        /* Layout */
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h1 { cursor: pointer; transition: color 0.2s; }
+        .header h1:hover { color: var(--sec); }
+
+        .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .nav-btn { padding: 10px 20px; background: var(--primary); color: var(--white); border: none; cursor: pointer; border-radius: 4px; }
+        
+        /* --- LANDING PAGE --- */
+        .landing-wrapper { display: flex; gap: 30px; justify-content: center; align-items: center; min-height: 60vh; flex-wrap: wrap; }
+        .landing-tile { 
+            background: white; width: 300px; height: 220px; border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 2px solid transparent;
+        }
+        .landing-tile:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); border-color: var(--sec); }
+        .tile-icon { font-size: 4em; margin-bottom: 20px; color: var(--primary); }
+        .tile-text { font-size: 1.5em; font-weight: bold; color: var(--primary); }
+        .tile-sub { font-size: 0.9em; color: #7f8c8d; margin-top: 5px; }
+
+        /* Formular Styles */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 0.95em; background: #f9f9f9; }
+        
+        /* Werkzeug Boxen */
+        .tool-box { border: 1px solid #eee; padding: 8px; border-radius: 4px; background: #fff; min-height: 90px; display: flex; flex-direction: column; justify-content: space-between; }
+        .tool-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px; margin-bottom: 5px; }
+        .t-label { color: var(--primary); font-size: 1.1em; }
+        .assigned-tools { font-size: 0.85em; margin-bottom: 5px; flex-grow: 1; }
+        .assigned-item { background: #f0f8ff; border: 1px solid #d6eaf8; padding: 5px; margin-bottom: 5px; border-radius: 3px; display: flex; gap: 10px; align-items: start; }
+        .item-text { flex: 1; }
+        .item-img { width: 50px; height: 50px; object-fit: cover; border-radius: 3px; border: 1px solid #ccc; background: #fff; }
+        .btn-slot-add { width: 100%; background: #ecf0f1; border: none; color: #7f8c8d; cursor: pointer; border-radius: 3px; font-weight: bold; font-size: 1.2em; padding: 4px 0; transition: 0.2s; }
+        .btn-slot-add:hover { background: var(--sec); color: white; }
+
+        /* --- WIZARD STYLES --- */
+        .wizard-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .wizard-card { background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 600px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
+        .wizard-step { display: none; animation: slideIn 0.3s ease-out; }
+        .wizard-step.active { display: block; }
+        .wizard-question { font-size: 1.4em; font-weight: bold; margin-bottom: 20px; color: var(--primary); }
+        .wizard-input { width: 100%; padding: 15px; font-size: 1.2em; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 20px; box-sizing: border-box; }
+        .wiz-btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .wiz-btn { padding: 12px 25px; border: none; border-radius: 6px; font-size: 1em; cursor: pointer; font-weight: bold; }
+        .wiz-btn-next { background: var(--sec); color: white; flex: 1; }
+        .wiz-btn-back { background: #ecf0f1; color: #7f8c8d; }
+        
+        .wiz-grid-select { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+        .wiz-option-btn { padding: 20px 10px; background: #f8f9fa; border: 2px solid #eee; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .wiz-option-btn:hover, .wiz-option-btn.selected { background: #eaf2f8; border-color: var(--sec); color: var(--sec); }
+
+        .wiz-tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .wiz-t-btn { padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; text-align: left; transition: 0.2s; min-height: 80px; position: relative; }
+        .wiz-t-btn:hover { background: #eee; }
+        .wiz-t-btn.defined { background: #e8f8f5; border-color: var(--success); color: var(--success); }
+        .wiz-t-label { font-weight: bold; font-size: 1.2em; display: block; }
+        .wiz-t-info { font-size: 0.8em; color: #666; display: block; margin-top: 5px; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- MODAL POPUP --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 3000; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .close-modal { cursor: pointer; float: right; font-size: 1.5em; }
+
+        /* --- PRESET BUTTONS STYLES --- */
+        .dynamic-fields { margin-bottom: 15px; background: #fafafa; padding: 15px; border-radius: 6px; border: 1px solid #eee; }
+        .field-group { margin-bottom: 15px; }
+        .field-label { font-weight: bold; font-size: 0.9em; margin-bottom: 5px; display: block; color: #555; }
+        
+        .preset-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 5px; }
+        .preset-btn { 
+            padding: 10px 14px; background: white; border: 1px solid #ccc; border-radius: 4px; 
+            cursor: pointer; flex: 1 0 auto; text-align: center; font-weight: 500; font-size: 0.95em; transition: 0.1s;
+        }
+        .preset-btn:hover { background: #f0f0f0; }
+        .preset-btn.active { background: var(--sec); color: white; border-color: var(--sec); }
+        
+        .custom-input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; font-weight: bold; color: var(--primary); }
+
+        /* Slider Styles (für Ausspannlänge) */
+        .slider-group { margin-bottom: 5px; background: white; padding: 10px; border: 1px solid #eee; border-radius: 5px; }
+        .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .slider-header input[type="number"] { width: 80px; text-align: right; border: 1px solid #ccc; color: var(--sec); font-weight: bold; }
+        input[type="range"] { width: 100%; }
+
+        /* Helpers */
+        .hidden { display: none !important; }
+        .btn-action { background: #27ae60; color: white; border: none; padding: 15px; width: 100%; font-size: 1.1em; cursor: pointer; margin-top: 20px; transition: 0.2s; }
+        .btn-action:disabled { background: #95a5a6; cursor: not-allowed; }
+
+        /* Print */
+        @media print {
+            body { background: white; font-size: 10pt; }
+            .no-print, .nav-btn, .header button, #search-view, .btn-slot-add, .modal-overlay, .wizard-overlay, #landing-view { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #999; padding: 10px; margin-bottom: 10px; break-inside: avoid; }
+            .grid-tools { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .tool-box { border: 1px solid #000; padding: 5px; }
+            .tool-box:empty { display: none; }
+            .assigned-item { border: none; padding: 5px 0; border-bottom: 1px dotted #ccc; }
+            .item-img { width: 100px; height: 100px; margin-right: 15px; }
+            input, select { border: none; background: transparent; padding: 0; font-weight: bold; appearance: none; }
+            img.preview-img { max-width: 150px; max-height: 150px; }
+            #create-view { display: block !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="wizardOverlay" class="wizard-overlay hidden">
+    <div class="wizard-card">
+        <div id="step1" class="wizard-step active">
+            <div class="wizard-question">1. Wie lautet die Artikelnummer?</div>
+            <input type="text" id="wiz_artNr" class="wizard-input" placeholder="z.B. 123-456-789">
+            <div class="wiz-btn-group">
+                <button class="wiz-btn wiz-btn-back" onclick="closeWizard()">Abbrechen</button>
+                <button class="wiz-btn wiz-btn-next" onclick="nextStep(2)">Weiter</button>
+            </div>
+        </div>
+
+        <div id="step2" class="wizard-step">
+            <div class="wizard-question">2. Welche Arbeitsfolge?</div>
+            <div class="wiz-grid-select">
+                <div class="wiz-option-btn" onclick="selectWizSeq('Drehen')">Drehen</div>
+                <div class="wiz-option-btn" onclick="selectWizSeq('Fräsen')">Fräsen</div>
+                <div class="wiz-option-btn" onclick="selectWizSeq('Bohren')">Bohren</div>
+                <div class="wiz-option-btn" onclick="selectWizSeq('Rollen')">Rollen</div>
+            </div>
+            <input type="hidden" id="wiz_sequence">
+            <div class="wiz-btn-group">
+                <button class="wiz-btn wiz-btn-back" onclick="prevStep(1)">Zurück</button>
+            </div>
+        </div>
+
+        <div id="step3" class="wizard-step">
+            <div class="wizard-question">3. Welche Maschine?</div>
+            <div class="wiz-grid-select" id="wiz_machine_grid"></div>
+            <input type="hidden" id="wiz_machine">
+            <div class="wiz-btn-group">
+                <button class="wiz-btn wiz-btn-back" onclick="prevStep(2)">Zurück</button>
+            </div>
+        </div>
+
+        <div id="step4" class="wizard-step">
+            <div class="wizard-question">4. Wer richtet die Maschine ein?</div>
+            <input type="text" id="wiz_employee" class="wizard-input" placeholder="Dein Name">
+            <div class="wiz-btn-group">
+                <button class="wiz-btn wiz-btn-back" onclick="prevStep(3)">Zurück</button>
+                <button class="wiz-btn wiz-btn-next" onclick="nextStep(5)">Weiter</button>
+            </div>
+        </div>
+
+        <div id="step5" class="wizard-step">
+            <div class="wizard-question">5. Werkzeuge belegen</div>
+            <p style="font-size:0.9em; color:#666; margin-bottom:15px;">Tippe auf einen Platz, um ein Werkzeug hinzuzufügen.</p>
+            <div class="wiz-tool-grid" id="wiz_tool_grid"></div>
+            <div class="wiz-btn-group">
+                <button class="wiz-btn wiz-btn-back" onclick="prevStep(4)">Zurück</button>
+                <button class="wiz-btn wiz-btn-next" onclick="nextStep(6)">Weiter zum Foto</button>
+            </div>
+        </div>
+
+        <div id="step6" class="wizard-step">
+            <div class="wizard-question">6. Foto der Aufspannung (Optional)</div>
+            <input type="file" id="wiz_photo" accept="image/*" capture="environment" class="wizard-input" style="font-size: 1em;" onchange="handleWizMainPhoto(this)">
+            <p id="wiz_compress_status" style="color:var(--sec); font-size:0.9em; display:none;">Bild wird komprimiert...</p>
+            <div class="wiz-btn-group">
+                <button class="wiz-btn wiz-btn-back" onclick="prevStep(5)">Zurück</button>
+                <button class="wiz-btn wiz-btn-next" onclick="finishWizard()">Fertigstellen</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header no-print">
+        <h1 onclick="switchView('landing')" title="Zur Startseite">CNC Digitales Rüstblatt</h1>
+        <div>
+            <button class="nav-btn" onclick="switchView('landing')">Startseite</button>
+        </div>
+    </div>
+
+    <div id="landing-view" class="landing-wrapper">
+        <div class="landing-tile" onclick="startWizard()">
+            <div class="tile-icon">＋</div>
+            <div class="tile-text">Neues Rüstblatt</div>
+            <div class="tile-sub">Assistent starten</div>
+        </div>
+        <div class="landing-tile" onclick="switchView('search')">
+            <div class="tile-icon">🔍</div>
+            <div class="tile-text">Rüstblatt suchen</div>
+            <div class="tile-sub">Archiv öffnen</div>
+        </div>
+    </div>
+
+    <div id="create-view" class="hidden">
+        <form id="setupForm">
+            <div class="card">
+                <h2>Allgemeine Daten</h2>
+                <div class="grid-2">
+                    <div class="form-group"><label>Artikelnummer</label><input type="text" id="artNr" required></div>
+                    <div class="form-group"><label>Arbeitsfolge</label><input type="text" id="sequence" readonly></div>
+                    <div class="form-group"><label>Maschine</label><input type="text" id="machine" readonly></div>
+                    <div class="form-group"><label>Mitarbeiter</label><input type="text" id="employee" required></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Werkzeugbelegung</h2>
+                <div class="grid-tools" id="toolContainer"></div>
+            </div>
+
+            <div class="card">
+                <h2>Aufspannung & Foto</h2>
+                <div class="form-group">
+                    <img id="setupPreview" class="preview-img" style="margin-top:10px; max-width: 300px; display:none; border: 1px solid #ddd; border-radius:4px;">
+                    <label style="margin-top:10px; font-size:0.8em; color:#888;">Foto ändern:</label>
+                    <input type="file" id="setupPhoto" accept="image/*" capture="environment" onchange="previewImage(this, 'setupPreview')">
+                    <p id="setup_compress_status" style="color:var(--sec); font-size:0.9em; display:none;">Bild wird komprimiert...</p>
+                </div>
+            </div>
+
+            <button type="button" id="btnProcess" class="btn-action no-print" onclick="processAndSend()">Speichern & Als PDF Senden</button>
+        </form>
+    </div>
+
+    <div id="search-view" class="hidden">
+        <div class="card">
+            <h2>Gespeicherte Rüstblätter</h2>
+            <div class="form-group"><input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Suche..."></div>
+            <table id="dataTable">
+                <thead><tr><th>Datum</th><th>Artikelnummer</th><th>Maschine</th><th>Mitarbeiter</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <button class="nav-btn" onclick="switchView('landing')" style="margin-top:20px;">Zurück</button>
+    </div>
+</div>
+
+<div id="toolModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-weight:bold; font-size:1.2em;">Werkzeug <span id="modalTargetT" style="color:var(--sec)"></span></span>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+        </div>
+        
+        <div class="form-group">
+            <label>Kategorie</label>
+            <div style="display:flex; gap:5px;">
+                <select id="modalToolType" onchange="renderToolFields()" style="width:100%"></select>
+                <button type="button" style="padding:0 10px;" onclick="toggleCustomType()">+</button>
+            </div>
+            <input type="text" id="modalCustomTypeInput" class="hidden" placeholder="Freitext Typ" style="width:100%; margin-top:5px;">
+        </div>
+
+        <div id="dynamicFieldsContainer" class="dynamic-fields"></div>
+
+        <div class="slider-group">
+            <div class="slider-header"><label>Ausspannlänge</label><input type="number" id="modalLenNum" value="50" oninput="syncSlider('modalLenSlider', this.value)"></div>
+            <input type="range" id="modalLenSlider" min="0" max="300" value="50" oninput="syncNum('modalLenNum', this.value)">
+        </div>
+
+        <div style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+            <label>Werkzeug-Foto</label>
+            <input type="file" id="modalToolPhoto" accept="image/*" capture="environment" onchange="handleModalPhoto(this)">
+            <p id="modal_compress_status" style="color:var(--sec); font-size:0.9em; display:none;">Bild wird komprimiert...</p>
+            <img id="modalToolPreview" style="width:100%; height:150px; background:#eee; display:none; object-fit:contain; margin-top:5px;">
+        </div>
+
+        <button type="button" id="btnModalSave" class="btn-save" onclick="saveToolFromModal()">Hinzufügen</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDJueI6GEUCSKhHOC8CHZlLmDDNylmohkk",
+        authDomain: "digitales-einrichteblatt.firebaseapp.com",
+        projectId: "digitales-einrichteblatt",
+        storageBucket: "digitales-einrichteblatt.firebasestorage.app",
+        messagingSenderId: "656735513232",
+        appId: "1:656735513232:web:2a84f80291771f54cd4615"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // --- CONFIG & DATA ---
+    const machineConfig = {
+        "Drehen": ["Pronto Rob. 1", "Pronto 1", "Pronto 3", "Pronto 4", "Pronto 5", "Smart", "Nexus", "Padovani", "Integrex 200"],
+        "Bohren": ["Doosan Rob. 1", "Doosan 3", "DMC 60 (H)", "Ergo 260 CL", "Doosan-2011"],
+        "Rollen": ["Grob 3", "Grob 2", "Grob 1"],
+        "Fräsen": ["DMU 125P", "DMU 80P", "Integrex 200", "Doosan-2011", "Doosan 3", "DMU 60 (H)"]
+    };
+
+    const toolDefinitions = {
+        "Bohrer": [
+            { id: "diam", label: "Durchmesser", type: "buttons", options: ["8.2", "10.2", "12.1"], allowCustom: true, unit: "mm" },
+            { id: "mat", label: "Schneidstoff", type: "buttons", options: ["HM", "HSS"], allowCustom: false },
+            { id: "ik", label: "IK (Innenkühlung)", type: "buttons", options: ["JA", "NEIN"], allowCustom: false }
+        ],
+        "Fräser": [
+            { id: "diam", label: "Durchmesser", type: "buttons", options: ["6", "8", "10", "12"], allowCustom: true, unit: "mm" }
+        ],
+        "Drehmeißel": [
+            { id: "iso", label: "Wendeplatte (ISO)", type: "text", placeholder: "z.B. CNMG 120408" },
+            { id: "dir", label: "Drehrichtung", type: "buttons", options: ["Links", "Rechts"], allowCustom: false },
+            { id: "radius", label: "Schneidenradius", type: "buttons", options: ["0.2", "0.4", "0.8", "1.2", "1.6"], allowCustom: false, unit: "mm" }
+        ],
+        "Reibahle": [
+            { id: "diam", label: "Durchmesser", type: "buttons", options: ["30H7", "35H7"], allowCustom: true }
+        ],
+        "Gewindebohrer": [
+            { id: "size", label: "Größe", type: "buttons", options: ["M5", "M6", "M6x1", "M8", "M8x1", "M10", "M10x1"], allowCustom: true },
+            { id: "tol", label: "Toleranz", type: "text", placeholder: "z.B. 6H" }
+        ],
+        "Entgrater": [
+            { id: "diam", label: "Durchmesser", type: "buttons", options: ["6", "8", "10", "12", "14"], allowCustom: false, unit: "mm" }
+        ]
+    };
+
+    let currentTIndex = null;
+    let currentModalImageSrc = ""; 
+    let currentMainPhotoSrc = ""; 
+    let wizardToolsData = {}; 
+
+    // --- NEU: BILD KOMPRIMIERUNG FUNKTION (V16) ---
+    // Verkleinert das Bild auf max. 800px Breite/Höhe bei 70% JPEG Qualität
+    window.compressImage = (file, callback) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const maxWidth = 800;
+                const maxHeight = 800;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Export als JPEG mit 70% Qualität (spart massiv Speicherplatz)
+                callback(canvas.toDataURL('image/jpeg', 0.7));
+            }
+        }
+    };
+
+    // --- GLOBALE FUNKTIONEN ---
+    window.startWizard = () => {
+        ['wiz_artNr', 'wiz_sequence', 'wiz_machine', 'wiz_employee', 'wiz_photo'].forEach(id => document.getElementById(id).value = "");
+        document.getElementById('wiz_machine_grid').innerHTML = ""; 
+        document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.remove('selected'));
+        wizardToolsData = {}; 
+        currentMainPhotoSrc = "";
+        
+        window.renderWizardToolGrid(); 
+        window.showStep(1);
+        document.getElementById('wizardOverlay').classList.remove('hidden');
+    };
+
+    window.closeWizard = () => document.getElementById('wizardOverlay').classList.add('hidden');
+    window.showStep = (n) => { document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active')); document.getElementById('step' + n).classList.add('active'); };
+
+    window.nextStep = (target) => {
+        if(target===2 && !document.getElementById('wiz_artNr').value) return alert("Artikelnummer fehlt");
+        if(target===3 && !document.getElementById('wiz_sequence').value) return alert("Arbeitsfolge fehlt");
+        if(target===4 && !document.getElementById('wiz_machine').value) return alert("Maschine fehlt");
+        if(target===5 && !document.getElementById('wiz_employee').value) return alert("Mitarbeiter fehlt");
+        window.showStep(target);
+    };
+    window.prevStep = (t) => window.showStep(t);
+
+    window.selectWizSeq = (seq) => {
+        document.getElementById('wiz_sequence').value = seq;
+        document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.toggle('selected', b.innerText === seq));
+        const machGrid = document.getElementById('wiz_machine_grid'); 
+        machGrid.innerHTML = '';
+        document.getElementById('wiz_machine').value = ''; 
+        (machineConfig[seq]||[]).forEach(m => {
+            machGrid.innerHTML += `<div class="wiz-option-btn" onclick="selectWizMachine('${m}', this)">${m}</div>`;
+        });
+        setTimeout(() => window.nextStep(3), 200);
+    };
+
+    window.selectWizMachine = (mach, btnElement) => {
+        document.getElementById('wiz_machine').value = mach;
+        document.querySelectorAll('#wiz_machine_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
+        btnElement.classList.add('selected');
+        setTimeout(() => window.nextStep(4), 200);
+    };
+
+    window.renderWizardToolGrid = () => {
+        const grid = document.getElementById('wiz_tool_grid');
+        grid.innerHTML = '';
+        for(let i=1; i<=12; i++) {
+            const data = wizardToolsData[i];
+            const isDef = !!data;
+            const label = isDef ? data.type : "Leer";
+            const info = isDef ? (data.details.length > 0 ? data.details[0] : "Belegt") : "Antippen";
+            grid.innerHTML += `<div class="wiz-t-btn ${isDef?'defined':''}" onclick="openModal(${i})"><span class="wiz-t-label">T${i}</span><span class="wiz-t-info">${label}<br>${info}</span></div>`;
+        }
+    };
+
+    // Geändert für Komprimierung
+    window.handleWizMainPhoto = (inp) => {
+        if (inp.files && inp.files[0]) {
+            const status = document.getElementById('wiz_compress_status');
+            status.style.display = 'block';
+            window.compressImage(inp.files[0], (compressedDataUrl) => {
+                currentMainPhotoSrc = compressedDataUrl;
+                status.style.display = 'none';
+            });
+        }
+    };
+
+    window.finishWizard = () => {
+        document.getElementById('artNr').value = document.getElementById('wiz_artNr').value;
+        document.getElementById('sequence').value = document.getElementById('wiz_sequence').value;
+        document.getElementById('machine').value = document.getElementById('wiz_machine').value;
+        document.getElementById('employee').value = document.getElementById('wiz_employee').value;
+
+        const cont = document.getElementById('toolContainer'); cont.innerHTML = '';
+        for(let i=1; i<=12; i++) {
+            const box = document.createElement('div'); box.className = 'tool-box';
+            let content = `<div class="tool-header"><span class="t-label">T${i}</span></div><div class="assigned-tools" id="tools_list_${i}">`;
+            if(wizardToolsData[i]) content += wizardToolsData[i].html;
+            content += `</div><button type="button" class="btn-slot-add no-print" onclick="openModal(${i})">+ Edit</button>`;
+            box.innerHTML = content;
+            cont.appendChild(box);
+        }
+
+        if (currentMainPhotoSrc) {
+            document.getElementById('setupPreview').src = currentMainPhotoSrc;
+            document.getElementById('setupPreview').style.display = 'block';
+        } else {
+             document.getElementById('setupPreview').style.display = 'none';
+        }
+
+        window.closeWizard();
+        window.switchView('create');
+    };
+
+    window.syncSlider = (id,v) => document.getElementById(id).value=v;
+    window.syncNum = (id,v) => document.getElementById(id).value=v;
+    window.selectPreset = (fieldId, value, btnElement) => {
+        const input = document.getElementById(`dyn_${fieldId}`);
+        if(input) input.value = value;
+        const container = btnElement.parentElement;
+        container.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+    };
+
+    window.initModalDropdown = () => {
+        const s = document.getElementById('modalToolType'); s.innerHTML='';
+        Object.keys(toolDefinitions).forEach(k => s.innerHTML+=`<option>${k}</option>`);
+        window.renderToolFields();
+    };
+
+    window.renderToolFields = () => {
+        const type = document.getElementById('modalToolType').value;
+        const c = document.getElementById('dynamicFieldsContainer'); c.innerHTML='';
+        const isCust = !document.getElementById('modalCustomTypeInput').classList.contains('hidden');
+        
+        if(isCust) { c.innerHTML=`<div class="field-group"><label>Details</label><input type="text" id="dyn_details" placeholder="..." class="custom-input"></div>`; return; }
+
+        (toolDefinitions[type]||[]).forEach(f => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'field-group';
+            const fid = `dyn_${f.id}`;
+            let html = `<span class="field-label">${f.label}</span>`;
+            
+            if (f.type === 'buttons') {
+                html += `<div class="preset-grid">`;
+                f.options.forEach(opt => html += `<button type="button" class="preset-btn" onclick="selectPreset('${f.id}', '${opt}', this)">${opt}</button>`);
+                html += `</div>`;
+                const inputType = f.allowCustom ? 'text' : 'hidden';
+                const ph = f.allowCustom ? '...oder Wert eingeben' : '';
+                html += `<input type="${inputType}" id="${fid}" class="custom-input" placeholder="${ph}">`;
+            } else {
+                html += `<input type="text" id="${fid}" class="custom-input" placeholder="${f.placeholder||''}">`;
+            }
+            wrapper.innerHTML = html;
+            c.appendChild(wrapper);
+        });
+    };
+
+    window.openModal = (i) => {
+        currentTIndex = i;
+        document.getElementById('modalTargetT').innerText = "T"+i;
+        document.getElementById('modalLenSlider').value=50; document.getElementById('modalLenNum').value=50;
+        document.getElementById('modalCustomTypeInput').classList.add('hidden');
+        document.getElementById('modalToolType').classList.remove('hidden');
+        document.getElementById('modalToolType').selectedIndex=0;
+        document.getElementById('modalToolPreview').style.display='none';
+        currentModalImageSrc=""; document.getElementById('modalToolPhoto').value="";
+        window.renderToolFields();
+        document.getElementById('toolModal').classList.remove('hidden');
+    };
+    window.closeModal = () => document.getElementById('toolModal').classList.add('hidden');
+    window.toggleCustomType = () => { const i=document.getElementById('modalCustomTypeInput'), s=document.getElementById('modalToolType'); if(i.classList.contains('hidden')){i.classList.remove('hidden');s.classList.add('hidden');}else{i.classList.add('hidden');s.classList.remove('hidden');} window.renderToolFields(); };
+    
+    // Geändert für Komprimierung
+    window.handleModalPhoto = (inp) => { 
+        if(inp.files[0]){
+            const status = document.getElementById('modal_compress_status');
+            status.style.display = 'block';
+            window.compressImage(inp.files[0], (compressedDataUrl) => {
+                currentModalImageSrc = compressedDataUrl; 
+                document.getElementById('modalToolPreview').src = compressedDataUrl; 
+                document.getElementById('modalToolPreview').style.display = 'block';
+                status.style.display = 'none';
+            });
+        }
+    };
+
+    window.saveToolFromModal = async () => {
+        if(!currentTIndex) return;
+
+        const btnSave = document.getElementById('btnModalSave');
+        btnSave.innerText = "Lädt hoch...";
+        btnSave.disabled = true;
+
+        let imgUrl = "";
+        if (currentModalImageSrc) {
+            try {
+                const imgRef = ref(storage, `tools/${Date.now()}_t${currentTIndex}.jpg`);
+                await uploadString(imgRef, currentModalImageSrc, 'data_url');
+                imgUrl = await getDownloadURL(imgRef);
+            } catch (e) { console.error("Fehler beim Bildupload:", e); }
+        }
+
+        let type, details=[];
+        const isCust = !document.getElementById('modalCustomTypeInput').classList.contains('hidden');
+        if(isCust) { type = document.getElementById('modalCustomTypeInput').value||"Werkzeug"; let d=document.getElementById('dyn_details').value; if(d) details.push(d); }
+        else { 
+            type=document.getElementById('modalToolType').value; 
+            (toolDefinitions[type]||[]).forEach(f=>{ 
+                const el=document.getElementById(`dyn_${f.id}`); 
+                if(el && el.value){ 
+                    let val = el.value;
+                    if(f.id==='diam') details.push(`Ø${val}${f.unit||''}`); 
+                    else if(f.id==='radius') details.push(`R${val}${f.unit||''}`);
+                    else if(f.id==='ik') details.push(`IK: ${val}`);
+                    else details.push(val); 
+                } 
+            }); 
+        }
+        
+        const len = document.getElementById('modalLenNum').value;
+        const imgHtml = imgUrl ? `<img src="${imgUrl}" class="item-img">` : '';
+        const itemHtml = `<div class="assigned-item">${imgHtml}<div class="item-text"><strong>${type}</strong>${details.join(', ')}<br><span style="color:#666;font-size:0.9em">L: ${len} mm</span></div></div>`;
+        
+        if(!wizardToolsData[currentTIndex]) wizardToolsData[currentTIndex] = { html: "", type: "", details: [] };
+        wizardToolsData[currentTIndex].html += itemHtml;
+        wizardToolsData[currentTIndex].type = type;
+        wizardToolsData[currentTIndex].details = details;
+
+        window.renderWizardToolGrid();
+        if(document.getElementById('wizardOverlay').classList.contains('hidden')) {
+             const cont = document.getElementById(`tools_list_${currentTIndex}`);
+             if(cont) cont.innerHTML += itemHtml;
+        }
+
+        btnSave.innerText = "Hinzufügen";
+        btnSave.disabled = false;
+        window.closeModal();
+    };
+
+    // Geändert für Komprimierung
+    window.previewImage = (inp, id) => { 
+        if(inp.files[0]){
+            const status = document.getElementById('setup_compress_status');
+            status.style.display = 'block';
+            window.compressImage(inp.files[0], (compressedDataUrl) => {
+                document.getElementById(id).src = compressedDataUrl;
+                document.getElementById(id).style.display = 'block';
+                currentMainPhotoSrc = compressedDataUrl;
+                status.style.display = 'none';
+            });
+        }
+    };
+
+    // --- FIREBASE SPEICHERN ---
+    window.processAndSend = async () => {
+        const art = document.getElementById('artNr').value;
+        const seq = document.getElementById('sequence').value;
+        const mach = document.getElementById('machine').value;
+        const emp = document.getElementById('employee').value;
+
+        if(!art || !emp) return alert("Artikelnummer und Mitarbeiter fehlen!");
+
+        const btn = document.getElementById('btnProcess');
+        btn.innerText = "Speichert in Cloud...";
+        btn.disabled = true;
+
+        let mainPhotoUrl = "";
+        if (currentMainPhotoSrc) {
+            try {
+                const imgRef = ref(storage, `setups/${Date.now()}_setup.jpg`);
+                await uploadString(imgRef, currentMainPhotoSrc, 'data_url');
+                mainPhotoUrl = await getDownloadURL(imgRef);
+            } catch (e) { console.error("Foto-Upload fehlgeschlagen:", e); }
+        }
+
+        try {
+            await addDoc(collection(db, "ruestblaetter"), {
+                artNr: art,
+                sequence: seq,
+                machine: mach,
+                employee: emp,
+                photoUrl: mainPhotoUrl,
+                toolsHtml: document.getElementById('toolContainer').innerHTML,
+                createdAt: serverTimestamp(),
+                dateString: new Date().toLocaleDateString()
+            });
+
+            alert("Erfolgreich in Firebase gespeichert!");
+            window.print(); // PDF Druck
+            
+            // UI Reset
+            document.getElementById('setupForm').reset();
+            document.getElementById('toolContainer').innerHTML = '';
+            document.getElementById('setupPreview').style.display = 'none';
+            currentMainPhotoSrc = "";
+            wizardToolsData = {};
+
+        } catch (error) {
+            console.error("Fehler beim Speichern:", error);
+            alert("Fehler beim Speichern. Sind die Firebase Regeln auf Testmodus?");
+        } finally {
+            btn.innerText = "Speichern & Als PDF Senden";
+            btn.disabled = false;
+        }
+    };
+
+    // --- FIREBASE REAL-TIME LESEN ---
+    function initRealtimeUpdates() {
+        const q = query(collection(db, "ruestblaetter"), orderBy("createdAt", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const tb = document.getElementById('tableBody');
+            tb.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const r = doc.data();
+                tb.innerHTML += `<tr><td>${r.dateString || '-'}</td><td>${r.artNr}</td><td>${r.machine}</td><td>${r.employee}</td></tr>`;
+            });
+        }, (error) => {
+            console.error("Fehler beim Laden der Daten. Checke Firestore Regeln.", error);
+        });
+    }
+
+    window.switchView = (v) => {
+        document.getElementById('landing-view').classList.add('hidden');
+        document.getElementById('create-view').classList.add('hidden');
+        document.getElementById('search-view').classList.add('hidden');
+        if(v==='landing') document.getElementById('landing-view').classList.remove('hidden');
+        else if(v==='create') document.getElementById('create-view').classList.remove('hidden');
+        else document.getElementById('search-view').classList.remove('hidden');
+    };
+    window.filterTable = () => { const f=document.getElementById('searchInput').value.toUpperCase(), tr=document.getElementById('tableBody').rows; for(let i=0;i<tr.length;i++) tr[i].style.display=tr[i].innerText.toUpperCase().includes(f)?'':'none'; };
+
+    // Start
+    window.initModalDropdown();
+    initRealtimeUpdates();
+
+</script>
+</body>
+</html>
