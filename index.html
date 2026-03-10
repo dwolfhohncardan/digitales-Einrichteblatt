@@ -131,6 +131,10 @@
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #f4f7f6; }
 
+        /* Leseansicht Besonderheiten */
+        #detail-view .btn-slot-add { display: none !important; } /* Ausblenden der "Werkzeug anpassen" Buttons in der Leseansicht */
+        .bg-light { background: #fdfdfd; padding: 12px; border: 1px solid #eee; border-radius: 6px; font-weight: bold; font-size: 1.1em; color: var(--primary); }
+
         /* Tablet Media Queries */
         @media (max-width: 800px) {
             .wiz-tool-grid { grid-template-columns: repeat(2, 1fr); }
@@ -149,7 +153,10 @@
             .item-img { width: 100px; height: 100px; margin-right: 15px; }
             input, select { border: none; background: transparent; padding: 0; font-weight: bold; appearance: none; }
             img.preview-img { max-width: 150px; max-height: 150px; }
-            #create-view { display: block !important; }
+            
+            /* Zeigt die jeweils geöffnete Ansicht (Resultat oder Detail) beim Drucken an */
+            #create-view:not(.hidden), #detail-view:not(.hidden) { display: block !important; }
+            #create-view.hidden, #detail-view.hidden { display: none !important; }
         }
     </style>
 </head>
@@ -290,6 +297,7 @@
     <div id="search-view" class="hidden">
         <div class="card">
             <h2>Gespeicherte Rüstblätter</h2>
+            <p style="color:#666; margin-bottom: 15px;">Tippe auf ein Rüstblatt in der Liste, um es zu öffnen.</p>
             <div class="form-group"><input type="text" id="searchInput" class="wizard-input" onkeyup="filterTable()" placeholder="Suche nach Artikel, Maschine..."></div>
             <div style="overflow-x: auto;">
                 <table id="dataTable">
@@ -299,6 +307,40 @@
             </div>
         </div>
         <button class="nav-btn" onclick="switchView('landing')" style="margin-top:20px; width: 100%; padding: 15px; font-size: 1.2em;">Zurück zur Startseite</button>
+    </div>
+
+    <div id="detail-view" class="hidden">
+        <div class="card">
+            <h2>Allgemeine Daten</h2>
+            <div class="grid-2">
+                <div class="form-group"><label>Artikelnummer</label><div id="det_artNr" class="bg-light"></div></div>
+                <div class="form-group"><label>Arbeitsfolge</label><div id="det_sequence" class="bg-light"></div></div>
+                <div class="form-group"><label>Maschine</label><div id="det_machine" class="bg-light"></div></div>
+                <div class="form-group"><label>Mitarbeiter</label><div id="det_employee" class="bg-light"></div></div>
+            </div>
+        </div>
+
+        <div class="card" id="det_clampingCard">
+            <h2>Spannmittel & Backen</h2>
+            <div class="grid-tools" id="det_clampingContainer"></div>
+        </div>
+
+        <div class="card">
+            <h2>Werkzeugbelegung</h2>
+            <div class="grid-tools" id="det_toolContainer"></div>
+        </div>
+
+        <div class="card" id="det_photoCard">
+            <h2>Gesamt-Foto der Aufspannung</h2>
+            <div class="form-group">
+                <img id="det_setupPreview" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
+            </div>
+        </div>
+
+        <div style="display:flex; gap: 15px; margin-top:20px;" class="no-print">
+            <button class="nav-btn" onclick="switchView('search')" style="flex: 1; background: #95a5a6; padding: 18px; font-size: 1.2em;">Zurück zur Liste</button>
+            <button class="nav-btn" onclick="window.print()" style="flex: 1; background: var(--success); padding: 18px; font-size: 1.2em;">Als PDF Drucken</button>
+        </div>
     </div>
 </div>
 
@@ -418,7 +460,6 @@
         ]
     };
 
-    // NEU: Konfiguration für Spannmittel (Inkl. Spannbacken)
     const clampingDefinitions = {
         "Zentrierung": [
             { id: "size", label: "Größe / Ausführung", type: "buttons", options: ["Br. 114", "Br. 124", "Br. 134", "Br. 144", "Br. 151", "Br. 178", "Br. 183", "Br. 253"], allowCustom: true }
@@ -438,6 +479,7 @@
     let wizardClampingData = []; 
     
     window.employeeList = []; 
+    window.savedSetups = {}; // V23: Globales Objekt für alle geladenen Rüstblätter (Archiv)
 
     // --- MITARBEITER SYNCHRONISATION ---
     function initEmployeeSync() {
@@ -550,7 +592,6 @@
     // --- WIZARD STEUERUNG ---
     window.startWizard = () => {
         window.requestFullScreen(); 
-        // V22: Kein wiz_photo mehr zum clearen
         ['wiz_artNr', 'wiz_sequence', 'wiz_machine', 'wiz_employee'].forEach(id => document.getElementById(id).value = "");
         document.getElementById('wiz_machine_grid').innerHTML = ""; 
         document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.remove('selected'));
@@ -566,14 +607,18 @@
         document.getElementById('wizardOverlay').classList.remove('hidden');
     };
 
+    // V23: Ansichts-Manager angepasst für Leseansicht (detail)
     window.switchView = (v) => {
         if(v !== 'landing') window.requestFullScreen();
         document.getElementById('landing-view').classList.add('hidden');
         document.getElementById('create-view').classList.add('hidden');
         document.getElementById('search-view').classList.add('hidden');
+        document.getElementById('detail-view').classList.add('hidden');
+
         if(v==='landing') document.getElementById('landing-view').classList.remove('hidden');
         else if(v==='create') document.getElementById('create-view').classList.remove('hidden');
-        else document.getElementById('search-view').classList.remove('hidden');
+        else if(v==='search') document.getElementById('search-view').classList.remove('hidden');
+        else if(v==='detail') document.getElementById('detail-view').classList.remove('hidden');
     };
 
     window.closeWizard = () => document.getElementById('wizardOverlay').classList.add('hidden');
@@ -692,7 +737,6 @@
                 const el=document.getElementById(`dyn_clamp_${f.id}`); 
                 if(el && el.value) {
                     let val = el.value;
-                    // Formatierung für bessere Lesbarkeit auf dem PDF
                     if(f.id === 'durchmesser') details.push(`Spann-Ø: ${val}mm`);
                     else if(f.id === 'druck' && !val.includes('bar')) details.push(`Druck: ${val} bar`);
                     else if(f.id === 'druck') details.push(`Druck: ${val}`);
@@ -958,15 +1002,60 @@
         }
     };
 
+    // --- V23: DETAIL ANSICHT ÖFFNEN ---
+    window.openDetailView = (docId) => {
+        const data = window.savedSetups[docId];
+        if(!data) return;
+
+        // Fülle die Felder der Lese-Ansicht
+        document.getElementById('det_artNr').innerText = data.artNr;
+        document.getElementById('det_sequence').innerText = data.sequence;
+        document.getElementById('det_machine').innerText = data.machine;
+        document.getElementById('det_employee').innerText = data.employee;
+
+        // Spannmittel
+        const clampCont = document.getElementById('det_clampingContainer');
+        clampCont.innerHTML = data.clampingHtml || '<p style="color:#888;">Keine Spannmittel hinterlegt.</p>';
+        document.getElementById('det_clampingCard').style.display = (data.clampingHtml && data.clampingHtml.trim() !== '') ? 'block' : 'none';
+
+        // Werkzeuge
+        document.getElementById('det_toolContainer').innerHTML = data.toolsHtml || '<p style="color:#888;">Keine Werkzeuge hinterlegt.</p>';
+
+        // Foto
+        const img = document.getElementById('det_setupPreview');
+        if(data.photoUrl) {
+            img.src = data.photoUrl;
+            img.style.display = 'block';
+            document.getElementById('det_photoCard').style.display = 'block';
+        } else {
+            img.src = '';
+            img.style.display = 'none';
+            document.getElementById('det_photoCard').style.display = 'none';
+        }
+
+        window.switchView('detail');
+    };
+
     // --- FIREBASE REAL-TIME LESEN ---
     function initRealtimeUpdates() {
         const q = query(collection(db, "ruestblaetter"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
+            window.savedSetups = {}; // Reset global cache
             const tb = document.getElementById('tableBody');
             tb.innerHTML = '';
             snapshot.forEach((doc) => {
                 const r = doc.data();
-                tb.innerHTML += `<tr><td>${r.dateString || '-'}</td><td>${r.artNr}</td><td>${r.machine}</td><td>${r.employee}</td></tr>`;
+                window.savedSetups[doc.id] = r; // Im Cache speichern
+                
+                // V23: Die Tabelle klickbar machen
+                tb.innerHTML += `
+                    <tr onclick="openDetailView('${doc.id}')" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.background='#f0f8ff'" onmouseout="this.style.background='transparent'">
+                        <td>${r.dateString || '-'}</td>
+                        <td style="font-weight:bold; color:var(--sec); font-size: 1.1em;">${r.artNr}</td>
+                        <td>${r.machine}</td>
+                        <td>${r.employee}</td>
+                    </tr>
+                `;
             });
         }, (error) => { console.error("Fehler beim Laden der Daten.", error); });
     }
