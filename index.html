@@ -10,7 +10,6 @@
     
     <style>
         :root { --primary: #2c3e50; --sec: #3498db; --bg: #f4f7f6; --white: #fff; --accent: #e67e22; --success: #27ae60; }
-        /* touch-action: manipulation verhindert nerviges zoomen bei schnellem tippen auf Tablets */
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; touch-action: manipulation; }
         
         /* Layout */
@@ -29,7 +28,7 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column; 
             justify-content: center; align-items: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 2px solid transparent;
         }
-        .landing-tile:active { transform: scale(0.95); } /* Tablet Tap Feedback */
+        .landing-tile:active { transform: scale(0.95); }
         .tile-icon { font-size: 5em; margin-bottom: 20px; color: var(--primary); }
         .tile-text { font-size: 1.6em; font-weight: bold; color: var(--primary); }
         .tile-sub { font-size: 1em; color: #7f8c8d; margin-top: 5px; }
@@ -39,7 +38,6 @@
         .grid-tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 1em; }
-        /* font-size: 16px zwingend für iOS/Android um Auto-Zoom zu verhindern */
         input[type="text"], input[type="number"], select, .wizard-input { 
             width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; 
             box-sizing: border-box; font-size: 16px; background: #f9f9f9; 
@@ -56,7 +54,7 @@
         .btn-slot-add { width: 100%; background: #ecf0f1; border: none; color: #7f8c8d; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 1.3em; padding: 8px 0; transition: 0.2s; }
         .btn-slot-add:hover, .btn-slot-add:active { background: var(--sec); color: white; }
 
-        /* --- WIZARD STYLES (Tablet Optimiert) --- */
+        /* --- WIZARD STYLES --- */
         .wizard-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .wizard-card { background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 700px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.4); max-height: 95vh; overflow-y: auto; }
         .wizard-step { display: none; animation: slideIn 0.3s ease-out; }
@@ -68,8 +66,17 @@
         .wiz-btn-back { background: #ecf0f1; color: #7f8c8d; }
         
         .wiz-grid-select { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
-        .wiz-option-btn { padding: 25px 15px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; font-weight: bold; font-size: 1.1em; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .wiz-option-btn { padding: 25px 15px; background: #f8f9fa; border: 2px solid #eee; border-radius: 10px; font-weight: bold; font-size: 1.1em; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; text-align: center; height: 100%; box-sizing: border-box;}
         .wiz-option-btn:hover, .wiz-option-btn.selected { background: #eaf2f8; border-color: var(--sec); color: var(--sec); transform: scale(1.02); }
+
+        /* Spezielles Design für Mitarbeiter-Löschen-Button */
+        .btn-delete-badge {
+            position: absolute; top: -8px; right: -8px; background: #e74c3c; color: white;
+            width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            cursor: pointer; z-index: 10; border: 2px solid white; transition: 0.2s;
+        }
+        .btn-delete-badge:active { transform: scale(0.85); }
 
         .wiz-tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
         .wiz-t-btn { padding: 20px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; cursor: pointer; text-align: left; transition: 0.2s; min-height: 90px; position: relative; }
@@ -109,26 +116,13 @@
         .btn-action { background: #27ae60; color: white; border: none; padding: 18px; width: 100%; font-size: 1.2em; font-weight: bold; cursor: pointer; margin-top: 20px; border-radius: 8px; transition: 0.2s; }
         .btn-action:disabled { background: #95a5a6; cursor: not-allowed; }
 
-        /* --- SCHWEBENDER VOLLBILD BUTTON (V18) --- */
+        /* --- SCHWEBENDER VOLLBILD BUTTON --- */
         .fab-fullscreen {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            background: rgba(44, 62, 80, 0.85); /* Halbtransparentes dunkles Blau */
-            color: white;
-            border: 2px solid rgba(255,255,255,0.2);
-            border-radius: 50px;
-            padding: 12px 20px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 9999; /* Immer im Vordergrund */
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.2s;
-            backdrop-filter: blur(5px);
+            position: fixed; bottom: 25px; right: 25px; background: rgba(44, 62, 80, 0.85); 
+            color: white; border: 2px solid rgba(255,255,255,0.2); border-radius: 50px; 
+            padding: 12px 20px; font-size: 1.1em; font-weight: bold; cursor: pointer; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 9999; display: flex; 
+            align-items: center; gap: 10px; transition: all 0.2s; backdrop-filter: blur(5px);
         }
         .fab-fullscreen:active { transform: scale(0.92); }
         .fab-fullscreen:hover { background: var(--primary); }
@@ -198,10 +192,11 @@
 
         <div id="step4" class="wizard-step">
             <div class="wizard-question">4. Wer richtet die Maschine ein?</div>
-            <input type="text" id="wiz_employee" class="wizard-input" placeholder="Dein Name">
+            <div class="wiz-grid-select" id="wiz_employee_grid">
+                </div>
+            <input type="hidden" id="wiz_employee">
             <div class="wiz-btn-group">
                 <button class="wiz-btn wiz-btn-back" onclick="prevStep(3)">Zurück</button>
-                <button class="wiz-btn wiz-btn-next" onclick="nextStep(5)">Weiter</button>
             </div>
         </div>
 
@@ -338,7 +333,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
     const firebaseConfig = {
@@ -392,8 +387,82 @@
     let currentModalImageSrc = ""; 
     let currentMainPhotoSrc = ""; 
     let wizardToolsData = {}; 
+    
+    // Globale Mitarbeiter-Liste (wird mit Firebase gesynct)
+    window.employeeList = []; 
 
-    // --- VOLLBILD FUNKTION (V18 Update) ---
+    // --- MITARBEITER SYNCHRONISATION (V19) ---
+    function initEmployeeSync() {
+        const empDocRef = doc(db, "config", "employees");
+        onSnapshot(empDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                window.employeeList = docSnap.data().list || [];
+            } else {
+                // Standardwerte setzen, wenn die DB noch leer ist
+                window.employeeList = ["Lange", "Oks", "Saric"];
+                setDoc(empDocRef, { list: window.employeeList });
+            }
+            window.renderEmployeeGrid();
+        }, (error) => {
+            console.error("Mitarbeiter konnten nicht geladen werden:", error);
+        });
+    }
+
+    window.renderEmployeeGrid = () => {
+        const grid = document.getElementById('wiz_employee_grid');
+        grid.innerHTML = '';
+        
+        window.employeeList.forEach(emp => {
+            grid.innerHTML += `
+                <div style="position: relative;">
+                    <div class="wiz-option-btn" onclick="selectWizEmployee('${emp}', this)">${emp}</div>
+                    <div class="btn-delete-badge" onclick="deleteEmployee('${emp}', event)" title="Mitarbeiter löschen">✖</div>
+                </div>
+            `;
+        });
+        
+        // Plus Button zum Hinzufügen
+        grid.innerHTML += `
+            <div class="wiz-option-btn" style="background:#eaf2f8; color:var(--sec); border-style: dashed;" onclick="addEmployee()">
+                <span style="font-size:1.5em; margin-right:8px;">+</span> Neu
+            </div>
+        `;
+    };
+
+    window.addEmployee = () => {
+        const name = prompt("Name des neuen Mitarbeiters:");
+        if (name && name.trim() !== "") {
+            const cleanName = name.trim();
+            if(!window.employeeList.includes(cleanName)) {
+                window.employeeList.push(cleanName);
+                // Speichern in Firebase (löst automatisch einen UI Refresh auf allen Geräten aus)
+                setDoc(doc(db, "config", "employees"), { list: window.employeeList });
+            }
+        }
+    };
+
+    window.deleteEmployee = (name, event) => {
+        if (event) event.stopPropagation(); // Verhindert, dass der Button darunter ausgelöst wird
+        const pwd = prompt(`Passwort eingeben, um '${name}' dauerhaft zu löschen:`);
+        
+        if (pwd === "Gelenkwelle") {
+            window.employeeList = window.employeeList.filter(e => e !== name);
+            setDoc(doc(db, "config", "employees"), { list: window.employeeList });
+        } else if (pwd !== null) {
+            alert("Falsches Passwort!");
+        }
+    };
+
+    window.selectWizEmployee = (emp, btnElement) => {
+        document.getElementById('wiz_employee').value = emp;
+        // Alle normalen Option Buttons des Grids suchen (ohne den Wrapper)
+        document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
+        btnElement.classList.add('selected');
+        setTimeout(() => window.nextStep(5), 200);
+    };
+
+
+    // --- VOLLBILD FUNKTION ---
     window.requestFullScreen = () => {
         const doc = window.document;
         const docEl = doc.documentElement;
@@ -417,7 +486,6 @@
         }
     };
 
-    // Button UI Update wenn sich der Fullscreen Status ändert
     const updateFsButtonUI = () => {
         const doc = window.document;
         const isFs = (doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
@@ -443,18 +511,21 @@
                 canvas.width = width; canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                callback(canvas.toDataURL('image/jpeg', 0.7)); // 70% Qualität
+                callback(canvas.toDataURL('image/jpeg', 0.7)); 
             }
         }
     };
 
-    // --- GLOBALE FUNKTIONEN ---
+    // --- WIZARD STEUERUNG ---
     window.startWizard = () => {
-        window.requestFullScreen(); // Versuche Vollbild beim Start
+        window.requestFullScreen(); 
         
         ['wiz_artNr', 'wiz_sequence', 'wiz_machine', 'wiz_employee', 'wiz_photo'].forEach(id => document.getElementById(id).value = "");
         document.getElementById('wiz_machine_grid').innerHTML = ""; 
         document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.remove('selected'));
+        // Mitarbeiter Buttons zurücksetzen
+        document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
+
         wizardToolsData = {}; 
         currentMainPhotoSrc = "";
         
@@ -481,7 +552,7 @@
         if(target===2 && !document.getElementById('wiz_artNr').value) return alert("Artikelnummer fehlt");
         if(target===3 && !document.getElementById('wiz_sequence').value) return alert("Arbeitsfolge fehlt");
         if(target===4 && !document.getElementById('wiz_machine').value) return alert("Maschine fehlt");
-        if(target===5 && !document.getElementById('wiz_employee').value) return alert("Mitarbeiter fehlt");
+        if(target===5 && !document.getElementById('wiz_employee').value) return alert("Bitte wähle einen Mitarbeiter aus.");
         window.showStep(target);
     };
     window.prevStep = (t) => window.showStep(t);
@@ -766,6 +837,7 @@
     // Start
     window.initModalDropdown();
     initRealtimeUpdates();
+    initEmployeeSync(); // Startet die Live-Synchro der Mitarbeiter
     window.switchView('landing');
 
 </script>
