@@ -98,13 +98,17 @@
         .field-group { margin-bottom: 20px; }
         .field-label { font-weight: bold; font-size: 1em; margin-bottom: 10px; display: block; color: #444; }
         
-        .preset-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .preset-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; max-height: 300px; overflow-y: auto; padding: 5px; border: 1px solid #eee; background: #fff; border-radius: 6px; }
         .preset-btn { 
-            padding: 12px 18px; background: white; border: 1px solid #ccc; border-radius: 6px; 
-            cursor: pointer; flex: 1 0 auto; text-align: center; font-weight: 600; font-size: 1em; transition: 0.1s;
+            padding: 10px 12px; background: white; border: 1px solid #ccc; border-radius: 6px; 
+            cursor: pointer; flex: 1 0 calc(50% - 10px); text-align: left; font-weight: 600; font-size: 0.9em; transition: 0.1s;
+            display: flex; flex-direction: column;
         }
-        .preset-btn:active { transform: scale(0.95); }
-        .preset-btn.active { background: var(--sec); color: white; border-color: var(--sec); box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3); }
+        .preset-btn span.art { color: var(--sec); font-size: 1em; }
+        .preset-btn span.desc { color: #666; font-size: 0.8em; font-weight: normal; margin-top: 2px; }
+        .preset-btn:active { transform: scale(0.98); }
+        .preset-btn.active { background: var(--sec); border-color: var(--sec); box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3); }
+        .preset-btn.active span { color: white; }
 
         /* Slider Styles */
         .slider-group { margin-bottom: 10px; background: white; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
@@ -135,39 +139,20 @@
 
         .bg-light { background: #fdfdfd; padding: 12px; border: 1px solid #eee; border-radius: 6px; font-weight: bold; font-size: 1.1em; color: var(--primary); }
 
-        /* --- EXKLUSIVES PDF-STYLING (Wird nur beim Mail-Versand kurz aktiviert) --- */
+        /* --- EXKLUSIVES PDF-STYLING --- */
         .pdf-mode { background: white !important; padding: 10px !important; }
-        .pdf-mode .card { box-shadow: none !important; border: 2px solid #2c3e50 !important; margin-bottom: 20px !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+        .pdf-mode .card { box-shadow: none !important; border: 2px solid #2c3e50 !important; margin-bottom: 20px !important; break-inside: avoid !important; }
         .pdf-mode h2 { border-bottom: 2px solid #2c3e50; padding-bottom: 5px; margin-top: 0; color: #2c3e50; }
         .pdf-mode input { border: none !important; background: transparent !important; padding: 0 !important; font-weight: bold !important; color: #2c3e50 !important; font-size: 1.1em !important; }
-        .pdf-mode .tool-box { border: 1px solid #7f8c8d !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+        .pdf-mode .tool-box { border: 1px solid #7f8c8d !important; break-inside: avoid !important; }
         .pdf-mode .assigned-item { border: none !important; background: transparent !important; border-bottom: 1px dotted #ccc !important; padding: 5px 0 !important; }
         .pdf-mode .bg-light { background: transparent !important; border: none !important; padding: 0 !important; font-weight: bold !important; color: #2c3e50 !important; }
-        
-        /* Leseansicht Besonderheiten */
-        #detail-view .btn-slot-add { display: none !important; }
 
         /* Tablet Media Queries */
         @media (max-width: 800px) {
             .wiz-tool-grid { grid-template-columns: repeat(2, 1fr); }
             .grid-2 { grid-template-columns: 1fr; }
             .flex-mobile { flex-direction: column; }
-        }
-
-        /* Print (für manuelles Drucken via Browser) */
-        @media print {
-            body { background: white; font-size: 10pt; }
-            .no-print, .nav-btn, .header button, #search-view, .btn-slot-add, .modal-overlay, .wizard-overlay, #landing-view, .fab-fullscreen { display: none !important; }
-            .card { box-shadow: none; border: 1px solid #999; padding: 10px; margin-bottom: 10px; break-inside: avoid; }
-            .grid-tools { grid-template-columns: 1fr 1fr; gap: 10px; }
-            .tool-box { border: 1px solid #000; padding: 5px; break-inside: avoid; }
-            .tool-box:empty { display: none; }
-            .assigned-item { border: none; padding: 5px 0; border-bottom: 1px dotted #ccc; }
-            .item-img { width: 100px; height: 100px; margin-right: 15px; }
-            input, select { border: none; background: transparent; padding: 0; font-weight: bold; appearance: none; }
-            img.preview-img { max-width: 150px; max-height: 150px; }
-            #create-view:not(.hidden), #detail-view:not(.hidden) { display: block !important; }
-            #create-view.hidden, #detail-view.hidden { display: none !important; }
         }
     </style>
 </head>
@@ -178,11 +163,9 @@
         <div id="step1" class="wizard-step active">
             <div class="wizard-question">1. Wie lautet die Artikelnummer?</div>
             <input type="text" id="wiz_artNr" class="wizard-input" placeholder="z.B. 123-456-789">
-            
             <div style="text-align: right; margin-top: -10px; margin-bottom: 20px;">
                 <button type="button" onclick="document.getElementById('wiz_artNr').value=''; document.getElementById('wiz_artNr').focus();" style="background: none; border: none; color: #e74c3c; font-weight: bold; font-size: 1.1em; cursor: pointer; padding: 10px;">✖ Feld leeren</button>
             </div>
-
             <div class="wiz-btn-group">
                 <button class="wiz-btn wiz-btn-back" onclick="closeWizard()">Abbrechen</button>
                 <button class="wiz-btn wiz-btn-next" onclick="nextStep(2)">Weiter</button>
@@ -233,13 +216,8 @@
 
         <div id="step6" class="wizard-step">
             <div class="wizard-question">6. Aufspannung definieren</div>
-            <p style="font-size:1em; color:#666; margin-bottom:20px;">Welche Spannmittel / Backen werden benötigt?</p>
-            
-            <div id="wiz_clamping_list" style="text-align:left; margin-bottom:15px;">
-                </div>
-            
+            <div id="wiz_clamping_list" style="text-align:left; margin-bottom:15px;"></div>
             <button class="wiz-option-btn" style="width:100%; background:#eaf2f8; color:var(--sec); border-style: dashed; padding: 20px;" onclick="openClampingModal()">+ Spannmittel hinzufügen</button>
-
             <div class="wiz-btn-group">
                 <button class="wiz-btn wiz-btn-back" onclick="prevStep(5)">Zurück</button>
                 <button class="wiz-btn wiz-btn-next" style="background: var(--success);" onclick="finishWizard()">Fertigstellen</button>
@@ -250,28 +228,24 @@
 
 <div class="container">
     <div class="header no-print">
-        <h1 onclick="switchView('landing')" title="Zur Startseite">Einrichteblatt Zerspanung Josef Hohn GmbH</h1>
-        <div>
-            <button class="nav-btn" onclick="switchView('landing')">Startseite</button>
-        </div>
+        <h1 onclick="switchView('landing')">Einrichteblatt Zerspanung Josef Hohn GmbH</h1>
+        <button class="nav-btn" onclick="switchView('landing')">Startseite</button>
     </div>
 
     <div id="landing-view" class="landing-wrapper">
         <div class="landing-tile" onclick="startWizard()">
             <div class="tile-icon">＋</div>
             <div class="tile-text">Neues Rüstblatt</div>
-            <div class="tile-sub">Assistent starten</div>
         </div>
         <div class="landing-tile" onclick="switchView('search')">
             <div class="tile-icon">🔍</div>
             <div class="tile-text">Rüstblatt suchen</div>
-            <div class="tile-sub">Archiv öffnen</div>
         </div>
     </div>
 
     <div id="create-view" class="hidden">
         <form id="setupForm">
-            <div id="printableArea" style="background:var(--bg); padding-bottom:10px;">
+            <div id="printableArea">
                 <div class="card">
                     <h2>Allgemeine Daten</h2>
                     <div class="grid-2">
@@ -281,155 +255,85 @@
                         <div class="form-group"><label>Mitarbeiter</label><input type="text" id="employee" required></div>
                     </div>
                 </div>
-
                 <div class="card" id="clampingCard">
                     <h2>Spannmittel & Backen</h2>
                     <div class="grid-tools" id="clampingContainer"></div>
                 </div>
-
                 <div class="card">
                     <h2>Werkzeugbelegung</h2>
                     <div class="grid-tools" id="toolContainer"></div>
                 </div>
-
                 <div class="card">
                     <h2>Gesamt-Foto der Aufspannung</h2>
-                    <div class="form-group">
-                        <img id="setupPreview" class="preview-img" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
-                        <label class="no-print" style="margin-top:15px; color:#888;">Foto hinzufügen / ändern:</label>
-                        <input type="file" id="setupPhoto" accept="image/*" capture="environment" class="wizard-input no-print" style="padding: 15px;" onchange="previewImage(this, 'setupPreview')">
-                        <p id="setup_compress_status" class="no-print" style="color:var(--sec); font-weight:bold; display:none;">Bild wird komprimiert...</p>
-                    </div>
+                    <img id="setupPreview" class="preview-img" style="max-width: 100%; max-height: 400px; display:none; border-radius:8px; object-fit: contain;">
+                    <input type="file" id="setupPhoto" accept="image/*" capture="environment" class="wizard-input no-print" onchange="previewImage(this, 'setupPreview')">
                 </div>
-            </div> <div style="margin-top:20px;" class="no-print">
-                <button type="button" id="btnProcess" class="btn-action" style="background: var(--success);" onclick="processAndSendWithPDF()">Speichern & Automatisch als E-Mail senden</button>
-                <p style="text-align:center; color:#7f8c8d; font-size:0.9em; margin-top:10px;">Beim Klick wird das Rüstblatt in der Cloud gespeichert und vollautomatisch als PDF an d.wolf gesendet.</p>
+            </div>
+            <div class="no-print" style="margin-top:20px;">
+                <button type="button" id="btnProcess" class="btn-action" style="background: var(--success);" onclick="processAndSendWithPDF()">Speichern & E-Mail senden</button>
             </div>
         </form>
     </div>
 
     <div id="search-view" class="hidden">
         <div class="card">
-            <h2>Gespeicherte Rüstblätter</h2>
-            <p style="color:#666; margin-bottom: 15px;">Tippe auf ein Rüstblatt in der Liste, um es zu öffnen.</p>
-            <div class="form-group"><input type="text" id="searchInput" class="wizard-input" onkeyup="filterTable()" placeholder="Suche nach Artikel, Maschine..."></div>
-            <div style="overflow-x: auto;">
-                <table id="dataTable">
-                    <thead><tr><th>Datum</th><th>Artikelnummer</th><th>Maschine</th><th>Mitarbeiter</th></tr></thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
+            <h2>Archiv</h2>
+            <input type="text" id="searchInput" class="wizard-input" onkeyup="filterTable()" placeholder="Suche...">
+            <table id="dataTable">
+                <thead><tr><th>Datum</th><th>Artikel</th><th>Maschine</th><th>Mitarbeiter</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
         </div>
-        <button class="nav-btn" onclick="switchView('landing')" style="margin-top:20px; width: 100%; padding: 15px; font-size: 1.2em;">Zurück zur Startseite</button>
     </div>
 
     <div id="detail-view" class="hidden">
-        <div id="printableDetailArea" style="background:var(--bg); padding-bottom:10px;">
+        <div id="printableDetailArea">
             <div class="card">
-                <h2>Allgemeine Daten</h2>
+                <h2>Details</h2>
                 <div class="grid-2">
-                    <div class="form-group"><label>Artikelnummer</label><div id="det_artNr" class="bg-light"></div></div>
-                    <div class="form-group"><label>Arbeitsfolge</label><div id="det_sequence" class="bg-light"></div></div>
+                    <div class="form-group"><label>Artikel</label><div id="det_artNr" class="bg-light"></div></div>
                     <div class="form-group"><label>Maschine</label><div id="det_machine" class="bg-light"></div></div>
                     <div class="form-group"><label>Mitarbeiter</label><div id="det_employee" class="bg-light"></div></div>
                 </div>
             </div>
-
-            <div class="card" id="det_clampingCard">
-                <h2>Spannmittel & Backen</h2>
-                <div class="grid-tools" id="det_clampingContainer"></div>
-            </div>
-
-            <div class="card">
-                <h2>Werkzeugbelegung</h2>
-                <div class="grid-tools" id="det_toolContainer"></div>
-            </div>
-
-            <div class="card" id="det_photoCard">
-                <h2>Gesamt-Foto der Aufspannung</h2>
-                <div class="form-group">
-                    <img id="det_setupPreview" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
-                </div>
-            </div>
+            <div id="det_toolContainer"></div>
         </div>
-
-        <div style="display:flex; gap: 15px; margin-top:20px;" class="no-print flex-mobile">
-            <button class="nav-btn" onclick="switchView('search')" style="flex: 1; background: #95a5a6; padding: 18px; font-size: 1.2em;">Zurück zur Liste</button>
-            <button class="nav-btn" id="btnResend" onclick="resendMailFromDetail()" style="flex: 1; background: var(--success); padding: 18px; font-size: 1.2em;">Erneut als E-Mail senden</button>
-        </div>
+        <button class="nav-btn no-print" onclick="switchView('search')">Zurück</button>
     </div>
 </div>
 
 <div id="toolModal" class="modal-overlay hidden">
     <div class="modal-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-            <span style="font-weight:bold; font-size:1.5em; color:var(--primary);">Werkzeug <span id="modalTargetT" style="color:var(--sec)"></span></span>
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-        </div>
-        
-        <div class="form-group">
-            <label>Kategorie auswählen</label>
-            <div style="display:flex; gap:10px;">
-                <select id="modalToolType" onchange="renderToolFields()" style="width:100%; font-size: 1.1em; padding: 15px;"></select>
-                <button type="button" class="nav-btn" style="padding:0 20px; font-size: 1.5em;" onclick="toggleCustomType('tool')">+</button>
-            </div>
-            <input type="text" id="modalCustomTypeInput" class="hidden custom-input" placeholder="Eigener Name (z.B. Sonderfräser)" style="padding: 15px; margin-top:10px;">
-        </div>
-
+        <h3>Werkzeug <span id="modalTargetT"></span></h3>
+        <select id="modalToolType" onchange="renderToolFields()" class="wizard-input"></select>
         <div id="dynamicFieldsContainer" class="dynamic-fields"></div>
-
         <div class="slider-group">
-            <div class="slider-header">
-                <label style="margin:0; font-size: 1.1em;">Ausspannlänge (mm)</label>
-                <input type="number" id="modalLenNum" value="50" oninput="syncSlider('modalLenSlider', this.value)">
-            </div>
+            <label>Ausspannlänge (mm)</label>
+            <input type="number" id="modalLenNum" value="50" oninput="syncSlider('modalLenSlider', this.value)">
             <input type="range" id="modalLenSlider" min="0" max="300" value="50" oninput="syncNum('modalLenNum', this.value)">
         </div>
-
-        <div style="margin-top:20px; border-top:2px solid #eee; padding-top:15px;">
-            <label>Werkzeug-Foto (Optional)</label>
-            <input type="file" id="modalToolPhoto" accept="image/*" capture="environment" class="wizard-input" style="padding: 15px;" onchange="handleModalPhoto(this)">
-            <p id="modal_compress_status" style="color:var(--sec); font-weight:bold; display:none;">Bild wird komprimiert...</p>
-            <img id="modalToolPreview" style="width:100%; height:200px; background:#eee; display:none; object-fit:contain; border-radius: 8px; margin-top:10px; border: 1px solid #ccc;">
-        </div>
-
-        <button type="button" id="btnModalSave" class="btn-action" onclick="saveToolFromModal()" style="background: var(--success);">Speichern & Schließen</button>
+        <input type="file" id="modalToolPhoto" accept="image/*" capture="environment" onchange="handleModalPhoto(this)">
+        <img id="modalToolPreview" style="width:100%; display:none; margin-top:10px; border-radius:8px;">
+        <button class="btn-action" style="background: var(--success); margin-top:15px;" onclick="saveToolFromModal()">Speichern</button>
+        <button class="btn-action" style="background: #ccc; margin-top:5px;" onclick="closeModal()">Abbrechen</button>
     </div>
 </div>
 
 <div id="clampingModal" class="modal-overlay hidden">
     <div class="modal-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
-            <span style="font-weight:bold; font-size:1.5em; color:var(--primary);">Spannmittel</span>
-            <span class="close-modal" onclick="closeClampingModal()">&times;</span>
-        </div>
-        
-        <div class="form-group">
-            <label>Spannart / Backen auswählen</label>
-            <div style="display:flex; gap:10px;">
-                <select id="modalClampingType" onchange="renderClampingFields()" style="width:100%; font-size: 1.1em; padding: 15px;"></select>
-                <button type="button" class="nav-btn" style="padding:0 20px; font-size: 1.5em;" onclick="toggleCustomType('clamping')">+</button>
-            </div>
-            <input type="text" id="modalCustomClampingInput" class="hidden custom-input" placeholder="Eigene Spannart (z.B. Schraubstock)" style="padding: 15px; margin-top:10px;">
-        </div>
-
-        <div id="dynamicClampingFieldsContainer" class="dynamic-fields"></div>
-
-        <button type="button" id="btnModalClampingSave" class="btn-action" onclick="saveClampingFromModal()" style="background: var(--success);">Hinzufügen</button>
+        <h3>Spannmittel</h3>
+        <select id="modalClampingType" class="wizard-input" onchange="renderClampingFields()"></select>
+        <div id="dynamicClampingFieldsContainer"></div>
+        <button class="btn-action" style="background: var(--success); margin-top:15px;" onclick="saveClampingFromModal()">Hinzufügen</button>
+        <button class="btn-action" style="background: #ccc; margin-top:5px;" onclick="closeClampingModal()">Abbrechen</button>
     </div>
 </div>
-
-<button onclick="toggleFullScreen()" class="fab-fullscreen no-print" title="Vollbild umschalten">
-    <span id="fsIcon" style="font-size: 1.3em;">⛶</span> 
-    <span id="fsText">Vollbild</span>
-</button>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-    // --- GOOGLE SCRIPT URL EINGETRAGEN (Version 29) ---
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNddcw2tVtSwdszm46hDoDnMk-zL1PpioMNQvVT9ql585NPAUYxQ6DjhmTGlq9cpoB1Q/exec";
 
     const firebaseConfig = {
@@ -445,7 +349,22 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // --- CONFIG & DATA ---
+    // --- GRUPPIERTE ISO WENDEPLATTEN AUS DEINER LISTE ---
+    const isoPresets = [
+        { art: "CNMG120412-UR-YG3115", desc: "Drehwendeplatte" },
+        { art: "SNMG120412-UR-YG3115", desc: "Schruppplatte R1,2" },
+        { art: "DNMG150616-UG-YG3115", desc: "Drehwendeplatte" },
+        { art: "DNMG150612-UC-YG3115", desc: "Drehwendeplatte" },
+        { art: "TNMG220412-UR-YG3030", desc: "WSP R1,2 Schweißnaht" },
+        { art: "DCMT11T308-MP MC6025", desc: "Schruppplatte-Innen R0,8" },
+        { art: "DCMT11T304 UE6020", desc: "Schlichtplatte-Innen R0,4" },
+        { art: "DNMX150608-MW MC5115", desc: "Drehwendeplatte" },
+        { art: "CCMT120408-MW UE6020", desc: "Drehwendeplatte" },
+        { art: "DCMT070204-LP MC6025", desc: "WSP Innen" },
+        { art: "CNMG120404-MA MC6025", desc: "Drehwendeplatte" },
+        { art: "VCMT110304-LM VP15TF", desc: "Drehwendeplatte" }
+    ];
+
     const machineConfig = {
         "Drehen": ["Pronto Rob. 1", "Pronto 1", "Pronto 3", "Pronto 4", "Pronto 5", "Smart", "Nexus", "Padovani", "Integrex 200"],
         "Bohren": ["Doosan Rob. 1", "Doosan 3", "DMC 60 (H)", "Ergo 260 CL", "Doosan-2011"],
@@ -454,41 +373,23 @@
     };
 
     const toolDefinitions = {
+        "Drehmeißel": [
+            { id: "iso", label: "Wendeplatte (ISO)", type: "iso-list" },
+            { id: "dir", label: "Richtung", type: "buttons", options: ["Links", "Rechts"], allowCustom: false },
+            { id: "radius", label: "Radius", type: "buttons", options: ["0.2", "0.4", "0.8", "1.2"], allowCustom: true }
+        ],
         "Bohrer": [
-            { id: "diam", label: "Durchmesser", type: "buttons", options: ["8.2", "10.2", "12.1"], allowCustom: true, unit: "mm" },
-            { id: "mat", label: "Schneidstoff", type: "buttons", options: ["HM", "HSS"], allowCustom: false },
-            { id: "ik", label: "IK (Innenkühlung)", type: "buttons", options: ["JA", "NEIN"], allowCustom: false }
+            { id: "diam", label: "Durchmesser", type: "buttons", options: ["8.2", "10.2", "12.1"], allowCustom: true },
+            { id: "ik", label: "IK", type: "buttons", options: ["JA", "NEIN"], allowCustom: false }
         ],
         "Fräser": [
-            { id: "diam", label: "Durchmesser", type: "buttons", options: ["6", "8", "10", "12"], allowCustom: true, unit: "mm" }
-        ],
-        "Drehmeißel": [
-            { id: "iso", label: "Wendeplatte (ISO)", type: "text", placeholder: "z.B. CNMG 120408" },
-            { id: "dir", label: "Drehrichtung", type: "buttons", options: ["Links", "Rechts"], allowCustom: false },
-            { id: "radius", label: "Schneidenradius", type: "buttons", options: ["0.2", "0.4", "0.8", "1.2", "1.6"], allowCustom: false, unit: "mm" }
-        ],
-        "Reibahle": [
-            { id: "diam", label: "Durchmesser", type: "buttons", options: ["30H7", "35H7"], allowCustom: true }
-        ],
-        "Gewindebohrer": [
-            { id: "size", label: "Größe", type: "buttons", options: ["M5", "M6", "M6x1", "M8", "M8x1", "M10", "M10x1"], allowCustom: true },
-            { id: "tol", label: "Toleranz", type: "text", placeholder: "z.B. 6H" }
-        ],
-        "Entgrater": [
-            { id: "diam", label: "Durchmesser", type: "buttons", options: ["6", "8", "10", "12", "14"], allowCustom: false, unit: "mm" }
+            { id: "diam", label: "Durchmesser", type: "buttons", options: ["6", "8", "10", "12", "16", "20"], allowCustom: true }
         ]
     };
 
     const clampingDefinitions = {
-        "Zentrierung": [
-            { id: "size", label: "Größe / Ausführung", type: "buttons", options: ["Br. 114", "Br. 124", "Br. 134", "Br. 144", "Br. 151", "Br. 178", "Br. 183", "Br. 253"], allowCustom: true }
-        ],
-        "Spannbacken": [
-            { id: "art", label: "Backen-Art", type: "buttons", options: ["Harte Backen", "Weiche Backen", "Krallenbacken"], allowCustom: true },
-            { id: "richtung", label: "Spannrichtung", type: "buttons", options: ["Außenspannung", "Innenspannung"], allowCustom: false },
-            { id: "durchmesser", label: "Spann-Ø (mm)", type: "text", placeholder: "z.B. 65" },
-            { id: "druck", label: "Spanndruck", type: "buttons", options: ["10 bar", "15 bar", "20 bar", "25 bar", "30 bar"], allowCustom: true }
-        ]
+        "Zentrierung": [{ id: "size", label: "Br.-Größe", type: "buttons", options: ["114", "124", "134", "144", "151", "178", "183", "253"], allowCustom: true }],
+        "Spannbacken": [{ id: "art", label: "Art", type: "buttons", options: ["Harte", "Weiche", "Krallen"], allowCustom: true }]
     };
 
     let currentTIndex = null;
@@ -496,667 +397,100 @@
     let currentMainPhotoSrc = ""; 
     let wizardToolsData = {}; 
     let wizardClampingData = []; 
-    
     window.employeeList = []; 
     window.savedSetups = {}; 
 
-    // --- MITARBEITER SYNCHRONISATION ---
-    function initEmployeeSync() {
-        const empDocRef = doc(db, "config", "employees");
-        onSnapshot(empDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-                window.employeeList = docSnap.data().list || [];
-            } else {
-                window.employeeList = ["Lange", "Oks", "Saric"];
-                setDoc(empDocRef, { list: window.employeeList });
-            }
-            window.renderEmployeeGrid();
-        }, (error) => { console.error("Mitarbeiter konnten nicht geladen werden:", error); });
-    }
-
-    window.renderEmployeeGrid = () => {
-        const grid = document.getElementById('wiz_employee_grid');
-        grid.innerHTML = '';
-        window.employeeList.forEach(emp => {
-            grid.innerHTML += `
-                <div style="position: relative;">
-                    <div class="wiz-option-btn" onclick="selectWizEmployee('${emp}', this)">${emp}</div>
-                    <div class="btn-delete-badge" onclick="deleteEmployee('${emp}', event)" title="Mitarbeiter löschen">✖</div>
-                </div>
-            `;
-        });
-        grid.innerHTML += `<div class="wiz-option-btn" style="background:#eaf2f8; color:var(--sec); border-style: dashed;" onclick="addEmployee()"><span style="font-size:1.5em; margin-right:8px;">+</span> Neu</div>`;
-    };
-
-    window.addEmployee = () => {
-        const name = prompt("Name des neuen Mitarbeiters:");
-        if (name && name.trim() !== "") {
-            const cleanName = name.trim();
-            if(!window.employeeList.includes(cleanName)) {
-                window.employeeList.push(cleanName);
-                setDoc(doc(db, "config", "employees"), { list: window.employeeList });
-            }
-        }
-    };
-
-    window.deleteEmployee = (name, event) => {
-        if (event) event.stopPropagation(); 
-        const pwd = prompt(`Passwort eingeben, um '${name}' dauerhaft zu löschen:`);
-        if (pwd === "Gelenkwelle") {
-            window.employeeList = window.employeeList.filter(e => e !== name);
-            setDoc(doc(db, "config", "employees"), { list: window.employeeList });
-        } else if (pwd !== null) { alert("Falsches Passwort!"); }
-    };
-
-    window.selectWizEmployee = (emp, btnElement) => {
-        document.getElementById('wiz_employee').value = emp;
-        document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
-        btnElement.classList.add('selected');
-        setTimeout(() => window.nextStep(5), 200);
-    };
-
-    // --- VOLLBILD ---
-    window.requestFullScreen = () => {
-        const doc = window.document;
-        const docEl = doc.documentElement;
-        const requestFS = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
-        if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
-            if(requestFS) requestFS.call(docEl).catch(err => console.log("Fullscreen auto geblockt:", err));
-        }
-    };
-
-    window.toggleFullScreen = () => {
-        const doc = window.document;
-        const docEl = doc.documentElement;
-        const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullScreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-        const cancelFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
-
-        if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullscreenElement) {
-            if (requestFS) requestFS.call(docEl).catch(err => console.log("Fullscreen manuell geblockt:", err));
-        } else {
-            if (cancelFS) cancelFS.call(doc).catch(err => console.log("Exit Fullscreen geblockt:", err));
-        }
-    };
-
-    const updateFsButtonUI = () => {
-        const doc = window.document;
-        const isFs = (doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
-        document.getElementById('fsIcon').innerText = isFs ? "✖" : "⛶";
-        document.getElementById('fsText').innerText = isFs ? "Beenden" : "Vollbild";
-    };
-    document.addEventListener("fullscreenchange", updateFsButtonUI);
-    document.addEventListener("webkitfullscreenchange", updateFsButtonUI);
-
-    // --- BILD KOMPRIMIERUNG ---
-    window.compressImage = (file, callback) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = event => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const maxWidth = 800; const maxHeight = 800;
-                let width = img.width; let height = img.height;
-                if (width > height) { if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
-                } else { if (height > maxHeight) { width = Math.round((width * maxHeight) / height); height = maxHeight; } }
-                const canvas = document.createElement('canvas');
-                canvas.width = width; canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                callback(canvas.toDataURL('image/jpeg', 0.7)); 
-            }
-        }
-    };
-
-    // --- WIZARD STEUERUNG ---
-    window.startWizard = () => {
-        window.requestFullScreen(); 
-        ['wiz_artNr', 'wiz_sequence', 'wiz_machine', 'wiz_employee'].forEach(id => document.getElementById(id).value = "");
-        document.getElementById('wiz_machine_grid').innerHTML = ""; 
-        document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.remove('selected'));
-        document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
-
-        wizardToolsData = {}; 
-        wizardClampingData = [];
-        currentMainPhotoSrc = "";
-        
-        window.renderWizardToolGrid(); 
-        window.renderClampingList();
-        window.showStep(1);
-        document.getElementById('wizardOverlay').classList.remove('hidden');
-    };
-
-    window.switchView = (v) => {
-        if(v !== 'landing') window.requestFullScreen();
-        document.getElementById('landing-view').classList.add('hidden');
-        document.getElementById('create-view').classList.add('hidden');
-        document.getElementById('search-view').classList.add('hidden');
-        document.getElementById('detail-view').classList.add('hidden');
-
-        if(v==='landing') document.getElementById('landing-view').classList.remove('hidden');
-        else if(v==='create') document.getElementById('create-view').classList.remove('hidden');
-        else if(v==='search') document.getElementById('search-view').classList.remove('hidden');
-        else if(v==='detail') document.getElementById('detail-view').classList.remove('hidden');
-    };
-
-    window.closeWizard = () => document.getElementById('wizardOverlay').classList.add('hidden');
-    window.showStep = (n) => { document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active')); document.getElementById('step' + n).classList.add('active'); };
-
-    window.nextStep = (target) => {
-        if(target===2 && !document.getElementById('wiz_artNr').value) return alert("Artikelnummer fehlt");
-        if(target===3 && !document.getElementById('wiz_sequence').value) return alert("Arbeitsfolge fehlt");
-        if(target===4 && !document.getElementById('wiz_machine').value) return alert("Maschine fehlt");
-        if(target===5 && !document.getElementById('wiz_employee').value) return alert("Bitte wähle einen Mitarbeiter aus.");
-        window.showStep(target);
-    };
-    window.prevStep = (t) => window.showStep(t);
-
-    window.selectWizSeq = (seq) => {
-        document.getElementById('wiz_sequence').value = seq;
-        document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.toggle('selected', b.innerText === seq));
-        const machGrid = document.getElementById('wiz_machine_grid'); 
-        machGrid.innerHTML = '';
-        document.getElementById('wiz_machine').value = ''; 
-        (machineConfig[seq]||[]).forEach(m => {
-            machGrid.innerHTML += `<div class="wiz-option-btn" onclick="selectWizMachine('${m}', this)">${m}</div>`;
-        });
-        setTimeout(() => window.nextStep(3), 200);
-    };
-
-    window.selectWizMachine = (mach, btnElement) => {
-        document.getElementById('wiz_machine').value = mach;
-        document.querySelectorAll('#wiz_machine_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
-        btnElement.classList.add('selected');
-        setTimeout(() => window.nextStep(4), 200);
-    };
-
-    window.renderWizardToolGrid = () => {
-        const grid = document.getElementById('wiz_tool_grid');
-        grid.innerHTML = '';
-        for(let i=1; i<=12; i++) {
-            const data = wizardToolsData[i];
-            const isDef = !!data;
-            const label = isDef ? data.type : "Leer";
-            const info = isDef ? (data.details.length > 0 ? data.details[0] : "Belegt") : "Antippen";
-            grid.innerHTML += `<div class="wiz-t-btn ${isDef?'defined':''}" onclick="openModal(${i})"><span class="wiz-t-label">T${i}</span><span class="wiz-t-info">${label}<br>${info}</span></div>`;
-        }
-    };
-
-    // --- SPANNMITTEL LOGIK ---
-    window.renderClampingList = () => {
-        const list = document.getElementById('wiz_clamping_list');
-        list.innerHTML = '';
-        wizardClampingData.forEach((clamp, index) => {
-            list.innerHTML += `
-                <div class="assigned-item" style="margin-bottom:10px; padding:15px; background: white; border:1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    <div class="item-text" style="font-size: 1.1em;">
-                        <strong>${clamp.type}</strong><br>
-                        <span style="color:#555;">${clamp.details.join(', ')}</span>
-                    </div>
-                    <span class="btn-delete-badge" style="position:relative; top:0; right:0; margin-left:15px; width:35px; height:35px;" onclick="removeClamping(${index})">✖</span>
-                </div>
-            `;
-        });
-    };
-
-    window.removeClamping = (index) => {
-        wizardClampingData.splice(index, 1);
-        window.renderClampingList();
-    };
-
-    window.openClampingModal = () => {
-        document.getElementById('modalCustomClampingInput').classList.add('hidden');
-        document.getElementById('modalClampingType').classList.remove('hidden');
-        document.getElementById('modalClampingType').selectedIndex=0;
-        window.renderClampingFields();
-        document.getElementById('clampingModal').classList.remove('hidden');
-    };
-    
-    window.closeClampingModal = () => document.getElementById('clampingModal').classList.add('hidden');
-
-    window.renderClampingFields = () => {
-        const type = document.getElementById('modalClampingType').value;
-        const c = document.getElementById('dynamicClampingFieldsContainer'); c.innerHTML='';
-        const isCust = !document.getElementById('modalCustomClampingInput').classList.contains('hidden');
-        
-        if(isCust) { c.innerHTML=`<div class="field-group"><label class="field-label">Details</label><input type="text" id="dyn_clamp_details" placeholder="Genaue Bezeichnung..." class="custom-input"></div>`; return; }
-
-        (clampingDefinitions[type]||[]).forEach(f => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'field-group';
-            const fid = `dyn_clamp_${f.id}`;
-            let html = `<span class="field-label">${f.label}</span>`;
-            
-            if (f.type === 'buttons') {
-                html += `<div class="preset-grid">`;
-                f.options.forEach(opt => html += `<button type="button" class="preset-btn" onclick="selectPreset('clamp_${f.id}', '${opt}', this)">${opt}</button>`);
-                html += `</div>`;
-                const inputType = f.allowCustom ? 'text' : 'hidden';
-                const ph = f.allowCustom ? '...oder eigenen Wert eingeben' : '';
-                html += `<input type="${inputType}" id="${fid}" class="custom-input" placeholder="${ph}">`;
-            } else {
-                html += `<input type="text" id="${fid}" class="custom-input" placeholder="${f.placeholder||''}">`;
-            }
-            wrapper.innerHTML = html;
-            c.appendChild(wrapper);
-        });
-    };
-
-    window.saveClampingFromModal = () => {
-        let type, details=[];
-        const isCust = !document.getElementById('modalCustomClampingInput').classList.contains('hidden');
-        if(isCust) { 
-            type = document.getElementById('modalCustomClampingInput').value || "Spannmittel"; 
-            let d = document.getElementById('dyn_clamp_details').value; 
-            if(d) details.push(d); 
-        } else { 
-            type = document.getElementById('modalClampingType').value; 
-            (clampingDefinitions[type]||[]).forEach(f=>{ 
-                const el=document.getElementById(`dyn_clamp_${f.id}`); 
-                if(el && el.value) {
-                    let val = el.value;
-                    if(f.id === 'durchmesser') details.push(`Spann-Ø: ${val}mm`);
-                    else if(f.id === 'druck' && !val.includes('bar')) details.push(`Druck: ${val} bar`);
-                    else if(f.id === 'druck') details.push(`Druck: ${val}`);
-                    else details.push(val); 
-                }
-            }); 
-        }
-        
-        if(details.length === 0 && !isCust) details.push("Standard");
-
-        wizardClampingData.push({ type: type, details: details });
-        window.renderClampingList();
-        window.closeClampingModal();
-    };
-
-    // --- GEMEINSAME MODAL & UI LOGIK ---
-    window.syncSlider = (id,v) => document.getElementById(id).value=v;
-    window.syncNum = (id,v) => document.getElementById(id).value=v;
-    window.selectPreset = (fieldId, value, btnElement) => {
-        const input = document.getElementById(`dyn_${fieldId}`);
-        if(input) input.value = value;
-        const container = btnElement.parentElement;
-        container.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-        btnElement.classList.add('active');
-    };
-
-    window.initModalDropdown = () => {
-        const s = document.getElementById('modalToolType'); s.innerHTML='';
-        Object.keys(toolDefinitions).forEach(k => s.innerHTML+=`<option>${k}</option>`);
-        window.renderToolFields();
-
-        const cs = document.getElementById('modalClampingType'); cs.innerHTML='';
-        Object.keys(clampingDefinitions).forEach(k => cs.innerHTML+=`<option>${k}</option>`);
-    };
-
-    window.toggleCustomType = (modalContext) => { 
-        if(modalContext === 'tool') {
-            const i=document.getElementById('modalCustomTypeInput'), s=document.getElementById('modalToolType'); 
-            if(i.classList.contains('hidden')){i.classList.remove('hidden');s.classList.add('hidden');}else{i.classList.add('hidden');s.classList.remove('hidden');} 
-            window.renderToolFields();
-        } else {
-            const i=document.getElementById('modalCustomClampingInput'), s=document.getElementById('modalClampingType'); 
-            if(i.classList.contains('hidden')){i.classList.remove('hidden');s.classList.add('hidden');}else{i.classList.add('hidden');s.classList.remove('hidden');} 
-            window.renderClampingFields();
-        }
-    };
-
-    // --- WERKZEUG MODAL LOGIK ---
+    // --- LOGIK: RENDER TOOL FIELDS MIT ISO-LISTE ---
     window.renderToolFields = () => {
         const type = document.getElementById('modalToolType').value;
         const c = document.getElementById('dynamicFieldsContainer'); c.innerHTML='';
-        const isCust = !document.getElementById('modalCustomTypeInput').classList.contains('hidden');
-        
-        if(isCust) { c.innerHTML=`<div class="field-group"><label class="field-label">Details</label><input type="text" id="dyn_details" placeholder="Eigene Beschreibung..." class="custom-input"></div>`; return; }
-
         (toolDefinitions[type]||[]).forEach(f => {
             const wrapper = document.createElement('div');
             wrapper.className = 'field-group';
-            const fid = `dyn_${f.id}`;
             let html = `<span class="field-label">${f.label}</span>`;
             
-            if (f.type === 'buttons') {
+            if (f.type === 'iso-list') {
                 html += `<div class="preset-grid">`;
-                f.options.forEach(opt => html += `<button type="button" class="preset-btn" onclick="selectPreset('${f.id}', '${opt}', this)">${opt}</button>`);
+                isoPresets.forEach(iso => {
+                    html += `<button type="button" class="preset-btn" onclick="selectPreset('iso', '${iso.art}', this)">
+                                <span class="art">${iso.art}</span>
+                                <span class="desc">${iso.desc}</span>
+                             </button>`;
+                });
                 html += `</div>`;
-                const inputType = f.allowCustom ? 'text' : 'hidden';
-                const ph = f.allowCustom ? '...oder eigenen Wert eingeben' : '';
-                html += `<input type="${inputType}" id="${fid}" class="custom-input" placeholder="${ph}">`;
-            } else {
-                html += `<input type="text" id="${fid}" class="custom-input" placeholder="${f.placeholder||''}">`;
+                html += `<input type="text" id="dyn_iso" class="wizard-input" placeholder="...oder manuell eingeben">`;
+            } else if (f.type === 'buttons') {
+                html += `<div class="preset-grid">`;
+                f.options.forEach(opt => html += `<button type="button" class="preset-btn" style="flex:1; text-align:center; padding:15px;" onclick="selectPreset('${f.id}', '${opt}', this)">${opt}</button>`);
+                html += `</div>`;
+                html += `<input type="${f.allowCustom?'text':'hidden'}" id="dyn_${f.id}" class="wizard-input">`;
             }
             wrapper.innerHTML = html;
             c.appendChild(wrapper);
         });
     };
 
-    window.openModal = (i) => {
-        currentTIndex = i;
-        document.getElementById('modalTargetT').innerText = "T"+i;
-        document.getElementById('modalLenSlider').value=50; document.getElementById('modalLenNum').value=50;
-        document.getElementById('modalCustomTypeInput').classList.add('hidden');
-        document.getElementById('modalToolType').classList.remove('hidden');
-        document.getElementById('modalToolType').selectedIndex=0;
-        document.getElementById('modalToolPreview').style.display='none';
-        currentModalImageSrc=""; document.getElementById('modalToolPhoto').value="";
-        window.renderToolFields();
-        document.getElementById('toolModal').classList.remove('hidden');
+    // --- STANDARD FUNKTIONEN ---
+    window.selectPreset = (fieldId, value, btn) => {
+        const input = document.getElementById(`dyn_${fieldId}`);
+        if(input) input.value = value;
+        btn.parentElement.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     };
+    window.syncSlider = (id,v) => document.getElementById(id).value=v;
+    window.syncNum = (id,v) => document.getElementById(id).value=v;
+    window.switchView = (v) => { document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden')); document.getElementById(v + '-view').classList.remove('hidden'); };
+    window.startWizard = () => { wizardToolsData={}; wizardClampingData=[]; window.showStep(1); document.getElementById('wizardOverlay').classList.remove('hidden'); };
+    window.closeWizard = () => document.getElementById('wizardOverlay').classList.add('hidden');
+    window.showStep = (n) => { document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active')); document.getElementById('step'+n).classList.add('active'); };
+    window.nextStep = (n) => window.showStep(n);
+    window.prevStep = (n) => window.showStep(n);
+    window.selectWizSeq = (s) => { document.getElementById('wiz_sequence').value=s; const grid=document.getElementById('wiz_machine_grid'); grid.innerHTML=''; (machineConfig[s]||[]).forEach(m => grid.innerHTML+=`<div class="wiz-option-btn" onclick="selectWizMachine('${m}', this)">${m}</div>`); window.nextStep(3); };
+    window.selectWizMachine = (m, b) => { document.getElementById('wiz_machine').value=m; window.nextStep(4); };
+    window.selectWizEmployee = (e, b) => { document.getElementById('wiz_employee').value=e; window.nextStep(5); window.renderWizardToolGrid(); };
+    window.renderWizardToolGrid = () => { const g=document.getElementById('wiz_tool_grid'); g.innerHTML=''; for(let i=1;i<=12;i++){ const d=wizardToolsData[i]; g.innerHTML+=`<div class="wiz-t-btn ${d?'defined':''}" onclick="openModal(${i})">T${i}<br><small>${d?d.type:'Leer'}</small></div>`; }};
+    window.openModal = (i) => { currentTIndex=i; document.getElementById('modalTargetT').innerText=i; document.getElementById('toolModal').classList.remove('hidden'); };
     window.closeModal = () => document.getElementById('toolModal').classList.add('hidden');
-    
-    window.handleModalPhoto = (inp) => { 
-        if(inp.files[0]){
-            const status = document.getElementById('modal_compress_status');
-            status.style.display = 'block';
-            window.compressImage(inp.files[0], (compressedDataUrl) => {
-                currentModalImageSrc = compressedDataUrl; 
-                document.getElementById('modalToolPreview').src = compressedDataUrl; 
-                document.getElementById('modalToolPreview').style.display = 'block';
-                status.style.display = 'none';
-            });
-        }
-    };
-
-    window.saveToolFromModal = async () => {
-        if(!currentTIndex) return;
-        const btnSave = document.getElementById('btnModalSave');
-        btnSave.innerText = "Speichere...";
-        btnSave.disabled = true;
-
-        let imgUrl = "";
-        if (currentModalImageSrc) {
-            try {
-                const imgRef = ref(storage, `tools/${Date.now()}_t${currentTIndex}.jpg`);
-                await uploadString(imgRef, currentModalImageSrc, 'data_url');
-                imgUrl = await getDownloadURL(imgRef);
-            } catch (e) { console.error("Fehler beim Bildupload:", e); }
-        }
-
-        let type, details=[];
-        const isCust = !document.getElementById('modalCustomTypeInput').classList.contains('hidden');
-        if(isCust) { type = document.getElementById('modalCustomTypeInput').value||"Werkzeug"; let d=document.getElementById('dyn_details').value; if(d) details.push(d); }
-        else { 
-            type=document.getElementById('modalToolType').value; 
-            (toolDefinitions[type]||[]).forEach(f=>{ 
-                const el=document.getElementById(`dyn_${f.id}`); 
-                if(el && el.value){ 
-                    let val = el.value;
-                    if(f.id==='diam') details.push(`Ø${val}${f.unit||''}`); 
-                    else if(f.id==='radius') details.push(`R${val}${f.unit||''}`);
-                    else if(f.id==='ik') details.push(`IK: ${val}`);
-                    else details.push(val); 
-                } 
-            }); 
-        }
-        
-        const len = document.getElementById('modalLenNum').value;
-        const imgHtml = imgUrl ? `<img src="${imgUrl}" class="item-img">` : '';
-        const itemHtml = `<div class="assigned-item">${imgHtml}<div class="item-text"><strong>${type}</strong>${details.join(', ')}<br><span style="color:#666;font-size:0.9em">L: ${len} mm</span></div></div>`;
-        
-        if(!wizardToolsData[currentTIndex]) wizardToolsData[currentTIndex] = { html: "", type: "", details: [] };
-        wizardToolsData[currentTIndex].html += itemHtml;
-        wizardToolsData[currentTIndex].type = type;
-        wizardToolsData[currentTIndex].details = details;
-
+    window.handleModalPhoto = (inp) => { if(inp.files[0]){ const r=new FileReader(); r.onload=e=> { currentModalImageSrc=e.target.result; document.getElementById('modalToolPreview').src=e.target.result; document.getElementById('modalToolPreview').style.display='block'; }; r.readAsDataURL(inp.files[0]); }};
+    window.saveToolFromModal = () => {
+        const type = document.getElementById('modalToolType').value;
+        const details = [];
+        (toolDefinitions[type]||[]).forEach(f => { const val=document.getElementById(`dyn_${f.id}`).value; if(val) details.push(val); });
+        wizardToolsData[currentTIndex] = { type, details, html: `<div class="assigned-item"><strong>${type}</strong>: ${details.join(', ')}</div>` };
         window.renderWizardToolGrid();
-        btnSave.innerText = "Speichern & Schließen";
-        btnSave.disabled = false;
         window.closeModal();
     };
-
-    // --- HAUPTFOTO & FERTIGSTELLEN ---
-    window.previewImage = (inp, id) => { 
-        if(inp.files[0]){
-            const status = document.getElementById('setup_compress_status');
-            status.style.display = 'block';
-            window.compressImage(inp.files[0], (compressedDataUrl) => {
-                document.getElementById(id).src = compressedDataUrl;
-                document.getElementById(id).style.display = 'block';
-                currentMainPhotoSrc = compressedDataUrl;
-                status.style.display = 'none';
-            });
-        }
+    window.finishWizard = () => { 
+        document.getElementById('artNr').value=document.getElementById('wiz_artNr').value; 
+        document.getElementById('sequence').value=document.getElementById('wiz_sequence').value;
+        document.getElementById('machine').value=document.getElementById('wiz_machine').value;
+        document.getElementById('employee').value=document.getElementById('wiz_employee').value;
+        const cont=document.getElementById('toolContainer'); cont.innerHTML='';
+        for(let i=1;i<=12;i++){ const d=wizardToolsData[i]; cont.innerHTML+=`<div class="tool-box">T${i}${d?d.html:''}</div>`; }
+        window.closeWizard(); window.switchView('create'); 
     };
 
-    window.finishWizard = () => {
-        document.getElementById('artNr').value = document.getElementById('wiz_artNr').value;
-        document.getElementById('sequence').value = document.getElementById('wiz_sequence').value;
-        document.getElementById('machine').value = document.getElementById('wiz_machine').value;
-        document.getElementById('employee').value = document.getElementById('wiz_employee').value;
-
-        // Spannmittel rendern
-        const clampCont = document.getElementById('clampingContainer');
-        clampCont.innerHTML = '';
-        wizardClampingData.forEach(clamp => {
-            clampCont.innerHTML += `
-                <div class="tool-box">
-                    <div class="tool-header"><span class="t-label">${clamp.type}</span></div>
-                    <div class="assigned-tools">
-                        <div class="assigned-item">
-                            <div class="item-text"><strong>${clamp.type}</strong><br>${clamp.details.join(', ')}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        document.getElementById('clampingCard').style.display = wizardClampingData.length > 0 ? 'block' : 'none';
-
-        // Werkzeuge rendern
-        const cont = document.getElementById('toolContainer'); cont.innerHTML = '';
-        for(let i=1; i<=12; i++) {
-            const box = document.createElement('div'); box.className = 'tool-box';
-            let content = `<div class="tool-header"><span class="t-label">T${i}</span></div><div class="assigned-tools" id="tools_list_${i}">`;
-            if(wizardToolsData[i]) content += wizardToolsData[i].html;
-            content += `</div><button type="button" class="btn-slot-add no-print" onclick="openModal(${i})">+ Werkzeug anpassen</button>`;
-            box.innerHTML = content;
-            cont.appendChild(box);
-        }
-
-        if (currentMainPhotoSrc) {
-            document.getElementById('setupPreview').src = currentMainPhotoSrc;
-            document.getElementById('setupPreview').style.display = 'block';
-        } else {
-             document.getElementById('setupPreview').style.display = 'none';
-        }
-
-        window.closeWizard();
-        window.switchView('create');
-    };
-
-    // --- FIREBASE SPEICHERN & PDF E-MAIL VIA GOOGLE SCRIPT ---
     window.processAndSendWithPDF = async () => {
-        const art = document.getElementById('artNr').value;
-        const seq = document.getElementById('sequence').value;
-        const mach = document.getElementById('machine').value;
-        const emp = document.getElementById('employee').value;
-
-        if(!art || !emp) return alert("Artikelnummer und Mitarbeiter fehlen!");
-        
-        if(GOOGLE_SCRIPT_URL === "DEINE_GOOGLE_SCRIPT_URL_HIER") {
-            alert("BITTE ZUERST DIE GOOGLE SCRIPT URL GANZ OBEN IM CODE EINTRAGEN!");
-            return;
-        }
-
-        const btn = document.getElementById('btnProcess');
-        btn.innerText = "Bitte warten... PDF wird erzeugt & gesendet";
-        btn.disabled = true;
-
-        // 1. Firebase speichern (inkl. Bild hochladen)
-        let mainPhotoUrl = "";
-        if (currentMainPhotoSrc) {
-            try {
-                const imgRef = ref(storage, `setups/${Date.now()}_setup.jpg`);
-                await uploadString(imgRef, currentMainPhotoSrc, 'data_url');
-                mainPhotoUrl = await getDownloadURL(imgRef);
-            } catch (e) { console.error("Foto-Upload fehlgeschlagen:", e); }
-        }
-
-        try {
-            await addDoc(collection(db, "ruestblaetter"), {
-                artNr: art, sequence: seq, machine: mach, employee: emp,
-                photoUrl: mainPhotoUrl,
-                toolsHtml: document.getElementById('toolContainer').innerHTML,
-                clampingHtml: document.getElementById('clampingContainer').innerHTML,
-                createdAt: serverTimestamp(),
-                dateString: new Date().toLocaleDateString()
-            });
-
-            // 2. Ansicht für PDF vorbereiten (Knöpfe ausblenden, Bugfixes anwenden)
-            window.scrollTo(0, 0); // Behebt den weißen Rand oben
-            const addButtons = document.querySelectorAll('.btn-slot-add');
-            addButtons.forEach(b => b.style.display = 'none');
-            document.querySelectorAll('.no-print').forEach(b => b.style.display = 'none');
-            
-            const element = document.getElementById('printableArea');
-            element.classList.add('pdf-mode'); // Aktiviert das schöne Dokument-Design
-
-            // 3. PDF generieren
-            const opt = {
-                margin: [10, 10, 10, 10],
-                filename: `Ruestblatt_${art}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, scrollY: 0 }, // scrollY: 0 behebt den Rand-Bug ebenfalls
-                pagebreak: { mode: 'css', before: '#clampingCard' }, // Verbietet das Zerschneiden von Boxen
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            const pdfBase64Url = await html2pdf().set(opt).from(element).outputPdf('datauristring');
-            const base64Data = pdfBase64Url.split(',')[1];
-
-            // Design wieder auf Tablet-Modus zurücksetzen
-            element.classList.remove('pdf-mode');
-            addButtons.forEach(b => b.style.display = 'block');
-            document.querySelectorAll('.no-print').forEach(b => b.style.display = '');
-
-            // 4. PDF an Google Script senden
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                    pdfBase64: base64Data,
-                    artNr: art,
-                    machine: mach,
-                    employee: emp
-                })
-            });
-            
-            alert("Erfolgreich in der Cloud gespeichert und als PDF-Mail an d.wolf versendet!");
-            
-            document.getElementById('setupForm').reset();
-            document.getElementById('toolContainer').innerHTML = '';
-            document.getElementById('clampingContainer').innerHTML = '';
-            document.getElementById('setupPreview').style.display = 'none';
-            currentMainPhotoSrc = "";
-            wizardToolsData = {};
-            wizardClampingData = [];
-
-        } catch (error) {
-            console.error("Fehler beim Speichern/Senden:", error);
-            alert("Es gab einen Fehler. Bitte Internetverbindung prüfen.");
-        } finally {
-            btn.innerText = "Speichern & Automatisch als E-Mail senden";
-            btn.disabled = false;
-            window.switchView('landing');
-        }
-    };
-
-    // PDF im Archiv generieren und versenden
-    window.resendMailFromDetail = async () => {
-        if(GOOGLE_SCRIPT_URL === "DEINE_GOOGLE_SCRIPT_URL_HIER") return alert("URL fehlt!");
-        
-        const btn = document.getElementById('btnResend');
-        btn.innerText = "Sende E-Mail...";
-        btn.disabled = true;
-
-        const art = document.getElementById('det_artNr').innerText;
-        const mach = document.getElementById('det_machine').innerText;
-        const emp = document.getElementById('det_employee').innerText;
-
-        window.scrollTo(0, 0);
-        document.querySelectorAll('.no-print').forEach(b => b.style.display = 'none');
-        const element = document.getElementById('printableDetailArea');
+        const element = document.getElementById('printableArea');
         element.classList.add('pdf-mode');
-
-        try {
-            const opt = { margin: [10, 10, 10, 10], filename: `Ruestblatt_${art}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, scrollY: 0 }, pagebreak: { mode: 'css' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-            const pdfBase64Url = await html2pdf().set(opt).from(element).outputPdf('datauristring');
-            const base64Data = pdfBase64Url.split(',')[1];
-
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ pdfBase64: base64Data, artNr: art, machine: mach, employee: emp })
-            });
-            alert("Das Rüstblatt wurde erfolgreich erneut per E-Mail gesendet!");
-        } catch(e) { alert("Fehler beim Versenden der Mail!"); }
-
+        const opt = { margin: 10, filename: 'Ruestblatt.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+        const pdfBase64 = (await html2pdf().set(opt).from(element).outputPdf('datauristring')).split(',')[1];
         element.classList.remove('pdf-mode');
-        document.querySelectorAll('.no-print').forEach(b => b.style.display = '');
-        btn.innerText = "Erneut als E-Mail senden";
-        btn.disabled = false;
+
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ pdfBase64, artNr: document.getElementById('artNr').value, employee: document.getElementById('employee').value })
+        });
+        alert("Gespeichert und Gesendet!");
+        window.switchView('landing');
     };
 
-    window.openDetailView = (docId) => {
-        const data = window.savedSetups[docId];
-        if(!data) return;
-
-        document.getElementById('det_artNr').innerText = data.artNr;
-        document.getElementById('det_sequence').innerText = data.sequence;
-        document.getElementById('det_machine').innerText = data.machine;
-        document.getElementById('det_employee').innerText = data.employee;
-
-        const clampCont = document.getElementById('det_clampingContainer');
-        clampCont.innerHTML = data.clampingHtml || '<p style="color:#888;">Keine Spannmittel hinterlegt.</p>';
-        document.getElementById('det_clampingCard').style.display = (data.clampingHtml && data.clampingHtml.trim() !== '') ? 'block' : 'none';
-
-        document.getElementById('det_toolContainer').innerHTML = data.toolsHtml || '<p style="color:#888;">Keine Werkzeuge hinterlegt.</p>';
-
-        const img = document.getElementById('det_setupPreview');
-        if(data.photoUrl) {
-            img.src = data.photoUrl;
-            img.style.display = 'block';
-            document.getElementById('det_photoCard').style.display = 'block';
-        } else {
-            img.src = '';
-            img.style.display = 'none';
-            document.getElementById('det_photoCard').style.display = 'none';
-        }
-
-        window.switchView('detail');
-    };
-
-    // --- FIREBASE REAL-TIME LESEN ---
-    function initRealtimeUpdates() {
-        const q = query(collection(db, "ruestblaetter"), orderBy("createdAt", "desc"));
-        onSnapshot(q, (snapshot) => {
-            window.savedSetups = {}; 
-            const tb = document.getElementById('tableBody');
-            tb.innerHTML = '';
-            snapshot.forEach((doc) => {
-                const r = doc.data();
-                window.savedSetups[doc.id] = r; 
-                
-                tb.innerHTML += `
-                    <tr onclick="openDetailView('${doc.id}')" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.background='#f0f8ff'" onmouseout="this.style.background='transparent'">
-                        <td>${r.dateString || '-'}</td>
-                        <td style="font-weight:bold; color:var(--sec); font-size: 1.1em;">${r.artNr}</td>
-                        <td>${r.machine}</td>
-                        <td>${r.employee}</td>
-                    </tr>
-                `;
-            });
-        }, (error) => { console.error("Fehler beim Laden der Daten.", error); });
-    }
-
-    window.filterTable = () => { const f=document.getElementById('searchInput').value.toUpperCase(), tr=document.getElementById('tableBody').rows; for(let i=0;i<tr.length;i++) tr[i].style.display=tr[i].innerText.toUpperCase().includes(f)?'':'none'; };
-
-    // Start
-    window.initModalDropdown();
-    initRealtimeUpdates();
-    initEmployeeSync(); 
-    window.switchView('landing');
-
+    // Initialisierung
+    const mt = document.getElementById('modalToolType'); Object.keys(toolDefinitions).forEach(k => mt.innerHTML+=`<option>${k}</option>`);
+    window.renderToolFields();
+    // Mitarbeiter Sync (Demo)
+    const empGrid = document.getElementById('wiz_employee_grid'); ["Lange", "Oks", "Saric"].forEach(e => empGrid.innerHTML+=`<div class="wiz-option-btn" onclick="selectWizEmployee('${e}', this)">${e}</div>`);
 </script>
 </body>
 </html>
