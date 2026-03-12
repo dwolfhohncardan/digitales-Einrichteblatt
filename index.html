@@ -106,6 +106,16 @@
         .preset-btn:active { transform: scale(0.95); }
         .preset-btn.active { background: var(--sec); color: white; border-color: var(--sec); box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3); }
 
+        /* NEU: Complex List Styles (für Drehmeißel Auswahl) */
+        .complex-list-container { max-height: 280px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px; background: white; margin-bottom: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .complex-list-item { display: flex; flex-direction: column; text-align: left; padding: 12px 15px; border: none; border-bottom: 1px solid #eee; border-radius: 0; margin: 0; width: 100%; box-sizing: border-box; background: white; cursor: pointer; transition: 0.1s; }
+        .complex-list-item:last-child { border-bottom: none; }
+        .complex-list-item:active { transform: scale(0.98); }
+        .complex-list-item.active { background: var(--sec); color: white; border-color: var(--sec); }
+        .complex-list-item .item-title { font-weight: bold; font-size: 1.1em; }
+        .complex-list-item .item-desc { font-size: 0.85em; color: #7f8c8d; margin-top: 4px; transition: color 0.1s; }
+        .complex-list-item.active .item-desc { color: #ecf0f1; }
+
         /* Normaler Slider */
         .slider-group { margin-bottom: 10px; background: white; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
         .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -113,67 +123,12 @@
         input[type="range"].single-range { width: 100%; height: 10px; }
 
         /* Multi-Range Slider CSS */
-        .multi-range-container {
-            position: relative;
-            width: 100%;
-            height: 40px;
-            margin-top: 15px;
-        }
-        .multi-range-track {
-            position: absolute;
-            width: 100%;
-            height: 8px;
-            background: #ddd;
-            border-radius: 4px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        .multi-range-highlight {
-            position: absolute;
-            height: 8px;
-            background: var(--sec);
-            border-radius: 4px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 1;
-        }
-        .multi-range-input {
-            position: absolute;
-            width: 100%;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            pointer-events: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            z-index: 2;
-            margin: 0;
-            padding: 0;
-            outline: none;
-            border: none;
-        }
-        .multi-range-input::-webkit-slider-thumb {
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background: #fff;
-            border: 3px solid var(--primary);
-            pointer-events: auto;
-            -webkit-appearance: none;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        .multi-range-input::-moz-range-thumb {
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background: #fff;
-            border: 3px solid var(--primary);
-            pointer-events: auto;
-            -moz-appearance: none;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
+        .multi-range-container { position: relative; width: 100%; height: 40px; margin-top: 15px; }
+        .multi-range-track { position: absolute; width: 100%; height: 8px; background: #ddd; border-radius: 4px; top: 50%; transform: translateY(-50%); }
+        .multi-range-highlight { position: absolute; height: 8px; background: var(--sec); border-radius: 4px; top: 50%; transform: translateY(-50%); z-index: 1; }
+        .multi-range-input { position: absolute; width: 100%; top: 50%; transform: translateY(-50%); background: none; pointer-events: none; -webkit-appearance: none; -moz-appearance: none; z-index: 2; margin: 0; padding: 0; outline: none; border: none; }
+        .multi-range-input::-webkit-slider-thumb { height: 24px; width: 24px; border-radius: 50%; background: #fff; border: 3px solid var(--primary); pointer-events: auto; -webkit-appearance: none; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .multi-range-input::-moz-range-thumb { height: 24px; width: 24px; border-radius: 50%; background: #fff; border: 3px solid var(--primary); pointer-events: auto; -moz-appearance: none; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
         /* Helpers */
         .hidden { display: none !important; }
@@ -181,13 +136,7 @@
         .btn-action:disabled { background: #95a5a6; cursor: not-allowed; }
 
         /* --- SCHWEBENDER VOLLBILD BUTTON --- */
-        .fab-fullscreen {
-            position: fixed; bottom: 25px; right: 25px; background: rgba(44, 62, 80, 0.85); 
-            color: white; border: 2px solid rgba(255,255,255,0.2); border-radius: 50px; 
-            padding: 12px 20px; font-size: 1.1em; font-weight: bold; cursor: pointer; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 9999; display: flex; 
-            align-items: center; gap: 10px; transition: all 0.2s; backdrop-filter: blur(5px);
-        }
+        .fab-fullscreen { position: fixed; bottom: 25px; right: 25px; background: rgba(44, 62, 80, 0.85); color: white; border: 2px solid rgba(255,255,255,0.2); border-radius: 50px; padding: 12px 20px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 9999; display: flex; align-items: center; gap: 10px; transition: all 0.2s; backdrop-filter: blur(5px); }
         .fab-fullscreen:active { transform: scale(0.92); }
         .fab-fullscreen:hover { background: var(--primary); }
 
@@ -195,7 +144,6 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 1.1em; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #f4f7f6; }
-
         .bg-light { background: #fdfdfd; padding: 12px; border: 1px solid #eee; border-radius: 6px; font-weight: bold; font-size: 1.1em; color: var(--primary); }
 
         /* Archiv Bearbeitungsmodus */
@@ -205,14 +153,7 @@
         .btn-delete-row:active { transform: scale(0.95); }
 
         /* --- PDF EXPORT TEMPLATE STYLES --- */
-        #hiddenPdfTemplate {
-            display: none; 
-            width: 210mm; 
-            min-height: 297mm;
-            background: white; color: black; font-family: 'Segoe UI', Arial, sans-serif; 
-            padding: 15mm; box-sizing: border-box; font-size: 12pt;
-            margin: 0 auto;
-        }
+        #hiddenPdfTemplate { display: none; width: 210mm; min-height: 297mm; background: white; color: black; font-family: 'Segoe UI', Arial, sans-serif; padding: 15mm; box-sizing: border-box; font-size: 12pt; margin: 0 auto; }
         .pdf-t-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
         .pdf-t-table th, .pdf-t-table td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: middle; }
         .pdf-t-table th { background-color: #f0f0f0; font-weight: bold; width: 25%; }
@@ -674,7 +615,38 @@
             { id: "diam", label: "Durchmesser", type: "buttons", options: ["6", "8", "10", "12"], allowCustom: true, unit: "mm" }
         ],
         "Drehmeißel": [
-            { id: "iso", label: "Wendeplatte (ISO)", type: "text", placeholder: "z.B. CNMG 120408" },
+            { 
+                id: "iso", 
+                label: "Wendeplatte (ISO)", 
+                type: "complex-list", 
+                options: [
+                    { val: "DCMT11T308-MP MC6025", desc: "Schruppplatte-Innen R0,8" },
+                    { val: "DCMT11T304 UE6020", desc: "Schlichtplatte-Innen R0,4 gelb hell" },
+                    { val: "SNMG120412-UR-YG3115", desc: "Schruppplatte R1,2 Wendeschneidplatte" },
+                    { val: "CNMG120412-UR-YG3115", desc: "CNMG120412-UR-YG3115 Schruppplatte R1,2" },
+                    { val: "DNMX150608-MW MC5115", desc: "DNMX150608-MW MC5115 Wendeplatte Schlichten R0,8" },
+                    { val: "DNMG150616-UG YG3115", desc: "DNMG150616-UG YG3115 Wendeschneidplatte Schruppen R1,6" },
+                    { val: "CCMT120408-MW UE6020", desc: "CCMT120408-MW UE6020 Wendeschneidplatte Schruppen/ Schlichten R0,8" },
+                    { val: "CCMT060204-MM-YG2025", desc: "CCMT060204-MM-YG2025/CCMT21.51-MM Wendeschneidplatte Bohren R0,4" },
+                    { val: "CCMT09T308-MP MC6015", desc: "CCMT09T308-MP MC6015 Wendeschneidplatte Bohren R0,8" },
+                    { val: "CCGT04T004L-F VP15TFdcs1", desc: "CCGT04T004L-F VP15TF Bohrplatte R0,4 Schneiden seitlich" },
+                    { val: "DNMG150604-VB NC3225", desc: "DNMG150604-VB NC3225 (Cutting-Tools)" },
+                    { val: "CCMT060204-NX3035", desc: "CCMT060204-NX3035 Wendeschneidplatte Spindler R0,4" },
+                    { val: "DNMG150612-UC-YG3115", desc: "DNMG150612-UC-YG3115 Schruppplatte R1,2 außen" },
+                    { val: "MMT16ERG60", desc: "MMT16ERG60 Gewindeschneidplatte VP10MF" },
+                    { val: "TCMT16T308-C25 NC3225", desc: "TCMT16T308-C25 NC3225 Bohrplatte Baureihe 178/183" },
+                    { val: "TNMG220412-UR-YG3030", desc: "Wendeschneidplatte R1,2 Schweißnaht ausstechen" },
+                    { val: "CBN WSP R0,4", desc: "88700341" },
+                    { val: "CBN WSP R0,8", desc: "88700343" },
+                    { val: "CCMT09T304 NX3035", desc: "Wendeschneidplatte Spindler R0,4" },
+                    { val: "CNMG120404-MA MC6025", desc: "CNMG120404-MA MC6025 Schruppp- und Schlichtplatte R0,4" },
+                    { val: "DCMT070204-LP MC6025", desc: "Wendeschneidplatte Innen" },
+                    { val: "CCMT09T304-HMP NC3030", desc: "DIHÜ Ausdrehen CCMT09T304" },
+                    { val: "VCMT110304-LM VP15TF", desc: "VCMT110304-LM VP15TF" },
+                    { val: "DNUX150604R-YG3020", desc: "nur für Pronto 4 / NH" }
+                ],
+                allowCustom: true 
+            },
             { id: "dir", label: "Drehrichtung", type: "buttons", options: ["Links", "Rechts"], allowCustom: false },
             { id: "radius", label: "Schneidenradius", type: "buttons", options: ["0.2", "0.4", "0.8", "1.2", "1.6"], allowCustom: false, unit: "mm" }
         ],
@@ -1154,6 +1126,20 @@
                 const ph = f.allowCustom ? '...oder eigenen Wert eingeben' : '';
                 html += `<input type="${inputType}" id="${targetId}" class="custom-input" placeholder="${ph}">`;
             
+            } else if (f.type === 'complex-list') {
+                // NEU: Scrollbare, formatierte Liste für Wendeplatten
+                html += `<div class="complex-list-container">`;
+                f.options.forEach(opt => {
+                    html += `<div class="preset-btn complex-list-item" onclick="selectPreset('${targetId}', '${opt.val}', this)">
+                                <span class="item-title">${opt.val}</span>
+                                <span class="item-desc">${opt.desc}</span>
+                             </div>`;
+                });
+                html += `</div>`;
+                const inputType = f.allowCustom ? 'text' : 'hidden';
+                const ph = f.allowCustom ? '...oder eigene Wendeplatte eingeben' : '';
+                html += `<input type="${inputType}" id="${targetId}" class="custom-input" placeholder="${ph}">`;
+
             } else if (f.type === 'range-slider') {
                 html += `
                 <div class="slider-group" style="margin-bottom:0; padding-bottom: 25px;">
