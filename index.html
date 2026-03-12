@@ -105,8 +105,9 @@
         }
         .preset-btn:active { transform: scale(0.95); }
         .preset-btn.active { background: var(--sec); color: white; border-color: var(--sec); box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3); }
+        .preset-btn.active .preset-desc { color: #ecf0f1 !important; }
 
-        /* NEU: Complex List Styles (für Drehmeißel Auswahl) */
+        /* Complex List Styles */
         .complex-list-container { max-height: 280px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px; background: white; margin-bottom: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
         .complex-list-item { display: flex; flex-direction: column; text-align: left; padding: 12px 15px; border: none; border-bottom: 1px solid #eee; border-radius: 0; margin: 0; width: 100%; box-sizing: border-box; background: white; cursor: pointer; transition: 0.1s; }
         .complex-list-item:last-child { border-bottom: none; }
@@ -597,6 +598,22 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
+    // --- GLOBALS ---
+    window.employeeList = []; 
+    window.savedSetups = {}; 
+    window.reibahlenList = []; // NEU: Live-Liste für Reibahlen
+    window.currentWizClampingType = null;
+    
+    let currentTIndex = null;
+    let currentModalImageSrc = ""; 
+    let currentMainPhotoSrc = ""; 
+    let wizardToolsData = {}; 
+    let wizardClampingData = []; 
+    
+    window.currentDuplicateDocId = null;
+    window.currentDuplicatePhotoUrl = "";
+    window.currentHallenplanBase64 = null;
+
     // --- CONFIG & DATA ---
     const machineConfig = {
         "Drehen": ["Pronto Rob. 1", "Pronto 1", "Pronto 3", "Pronto 4", "Pronto 5", "Smart", "Nexus", "Padovani", "Integrex 200"],
@@ -607,7 +624,15 @@
 
     const toolDefinitions = {
         "Bohrer": [
-            { id: "diam", label: "Durchmesser", type: "buttons", options: ["8.2", "10.2", "12.1"], allowCustom: true, unit: "mm" },
+            { id: "typ", label: "Sonderbohrer", type: "buttons", options: [
+                "Sonderstufenbohrer Br. 145",
+                "Sonderstufenbohrer Br. 151",
+                "Sonderstufenbohrer Br. 178",
+                "Sonderstufenbohrer Br. 183",
+                "Sonderstufenbohrer Br. 190",
+                "Sonderstufenbohrer Br. 253"
+            ], allowCustom: true },
+            { id: "diam", label: "Standard Durchmesser", type: "buttons", options: ["8.2", "10.2", "12.1"], allowCustom: true, unit: "mm" },
             { id: "mat", label: "Schneidstoff", type: "buttons", options: ["HM", "HSS"], allowCustom: false },
             { id: "ik", label: "IK (Innenkühlung)", type: "buttons", options: ["JA", "NEIN"], allowCustom: false }
         ],
@@ -651,7 +676,7 @@
             { id: "radius", label: "Schneidenradius", type: "buttons", options: ["0.2", "0.4", "0.8", "1.2", "1.6"], allowCustom: false, unit: "mm" }
         ],
         "Reibahle": [
-            { id: "diam", label: "Durchmesser", type: "buttons", options: ["30H7", "35H7"], allowCustom: true }
+            { id: "typ", label: "Gespeicherte Reibahlen", type: "dynamic-reibahlen-list" }
         ],
         "Gewindebohrer": [
             { id: "size", label: "Größe", type: "buttons", options: ["M5", "M6", "M6x1", "M8", "M8x1", "M10", "M10x1"], allowCustom: true },
@@ -681,21 +706,6 @@
             { id: "size", label: "Ausführung / Größe", type: "buttons", options: ["Entfällt", "Br. 114", "Br. 124", "Br. 134", "Br. 144", "Br. 151", "Br. 178", "Br. 183", "Br. 253"], allowCustom: true }
         ]
     };
-
-    let currentTIndex = null;
-    let currentModalImageSrc = ""; 
-    let currentMainPhotoSrc = ""; 
-    let wizardToolsData = {}; 
-    let wizardClampingData = []; 
-    
-    window.employeeList = []; 
-    window.savedSetups = {}; 
-    window.currentWizClampingType = null;
-    
-    // Globale Variablen für Duplikats-Handling und Hallenplan
-    window.currentDuplicateDocId = null;
-    window.currentDuplicatePhotoUrl = "";
-    window.currentHallenplanBase64 = null;
 
     // --- RANGE SLIDER LOGIC ---
     window.syncMultiRange = (idPrefix) => {
@@ -822,7 +832,6 @@
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 
-                // Logo Sync
                 if (data.logoBase64) {
                     document.getElementById('pdfCompanyLogo').src = data.logoBase64;
                     document.getElementById('settingsLogoPreview').src = data.logoBase64;
@@ -831,7 +840,6 @@
                     document.getElementById('settingsLogoPreview').style.display = 'none';
                 }
 
-                // Hallenplan Sync
                 if (data.hallenplanBase64) {
                     window.currentHallenplanBase64 = data.hallenplanBase64;
                     document.getElementById('settingsHallenplanPreview').src = data.hallenplanBase64;
@@ -875,7 +883,6 @@
         status.innerText = "Verarbeite Hallenplan...";
         status.style.color = "var(--sec)";
 
-        // Nutze eine größere Kompressionsstufe (1200px), damit Pläne lesbar bleiben
         window.compressImage(inp.files[0], async (base64Data) => {
             try {
                 status.innerText = "Speichere in Datenbank...";
@@ -888,6 +895,46 @@
                 status.style.color = "red";
             }
         }, 1200); 
+    };
+
+    // --- DATENBANK FÜR REIBAHLEN ---
+    function initReibahlenSync() {
+        const reibDocRef = doc(db, "config", "reibahlen");
+        onSnapshot(reibDocRef, (docSnap) => {
+            if (docSnap.exists()) { 
+                window.reibahlenList = docSnap.data().list || []; 
+            } else { 
+                window.reibahlenList = [
+                    { val: "Reibahle beschichtet Ø30mm", desc: "Art.-Nr. 40 577 30000" },
+                    { val: "Reibahle unbeschichtet Ø30mm", desc: "Art.-Nr. 40 544 30000" },
+                    { val: "Reibahle beschichtet Ø35mm", desc: "Art.-Nr. 40 577 35000" },
+                    { val: "Reibahle unbeschichtet Ø35mm", desc: "Art.-Nr. 40 544 35000" }
+                ]; 
+                setDoc(reibDocRef, { list: window.reibahlenList }); 
+            }
+            // Aktualisiere Modal in Echtzeit, falls es gerade offen ist
+            if(!document.getElementById('toolModal').classList.contains('hidden') && document.getElementById('modalToolType').value === 'Reibahle') {
+                window.renderToolFields();
+            }
+        });
+    }
+
+    window.addNewReibahle = () => {
+        const bez = document.getElementById('new_r_bez').value.trim();
+        const art = document.getElementById('new_r_art').value.trim();
+        if(!bez || !art) return alert("Bitte Bezeichnung und Artikelnummer eingeben!");
+        
+        window.reibahlenList.push({ val: bez, desc: art });
+        setDoc(doc(db, "config", "reibahlen"), { list: window.reibahlenList });
+    };
+
+    window.deleteReibahle = (idx, event) => {
+        if (event) event.stopPropagation();
+        const pwd = prompt("Passwort eingeben, um diese Reibahle dauerhaft aus dem Archiv zu löschen:");
+        if (pwd === "Gelenkwelle") {
+            window.reibahlenList.splice(idx, 1);
+            setDoc(doc(db, "config", "reibahlen"), { list: window.reibahlenList });
+        } else if (pwd !== null) { alert("Falsches Passwort!"); }
     };
 
     function initEmployeeSync() {
@@ -1003,10 +1050,7 @@
 
     window.switchView = (v) => {
         if(v !== 'landing') window.requestFullScreen();
-        
-        if(v !== 'search') {
-            window.exitArchiveEditMode();
-        }
+        if(v !== 'search') window.exitArchiveEditMode();
 
         document.getElementById('landing-view').classList.add('hidden');
         document.getElementById('create-view').classList.add('hidden');
@@ -1119,7 +1163,16 @@
             if (f.type === 'buttons') {
                 html += `<div class="preset-grid">`;
                 f.options.forEach(opt => {
-                    html += `<button type="button" class="preset-btn" onclick="selectPreset('${targetId}', '${opt}', this)">${opt}</button>`;
+                    if (typeof opt === 'object' && opt !== null) {
+                        const valToSave = opt.desc ? `${opt.val} (${opt.desc})` : opt.val;
+                        const safeVal = valToSave.replace(/'/g, "´").replace(/"/g, '&quot;');
+                        html += `<button type="button" class="preset-btn" onclick="selectPreset('${targetId}', '${safeVal}', this)" style="display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.2; gap:4px;">
+                                    <span>${opt.val}</span>
+                                    ${opt.desc ? `<span class="preset-desc" style="font-size:0.85em; color:#7f8c8d; font-weight:normal; margin-top:2px; transition: color 0.1s;">${opt.desc}</span>` : ''}
+                                 </button>`;
+                    } else {
+                        html += `<button type="button" class="preset-btn" onclick="selectPreset('${targetId}', '${opt}', this)">${opt}</button>`;
+                    }
                 });
                 html += `</div>`;
                 const inputType = f.allowCustom ? 'text' : 'hidden';
@@ -1127,10 +1180,11 @@
                 html += `<input type="${inputType}" id="${targetId}" class="custom-input" placeholder="${ph}">`;
             
             } else if (f.type === 'complex-list') {
-                // NEU: Scrollbare, formatierte Liste für Wendeplatten
                 html += `<div class="complex-list-container">`;
                 f.options.forEach(opt => {
-                    html += `<div class="preset-btn complex-list-item" onclick="selectPreset('${targetId}', '${opt.val}', this)">
+                    const valToSave = opt.desc ? `${opt.val} (${opt.desc})` : opt.val;
+                    const safeVal = valToSave.replace(/'/g, "´").replace(/"/g, '&quot;');
+                    html += `<div class="preset-btn complex-list-item" onclick="selectPreset('${targetId}', '${safeVal}', this)">
                                 <span class="item-title">${opt.val}</span>
                                 <span class="item-desc">${opt.desc}</span>
                              </div>`;
@@ -1139,6 +1193,34 @@
                 const inputType = f.allowCustom ? 'text' : 'hidden';
                 const ph = f.allowCustom ? '...oder eigene Wendeplatte eingeben' : '';
                 html += `<input type="${inputType}" id="${targetId}" class="custom-input" placeholder="${ph}">`;
+
+            // --- NEU: DYNAMISCHE REIBAHLEN LISTE ---
+            } else if (f.type === 'dynamic-reibahlen-list') {
+                html += `<div class="complex-list-container">`;
+                (window.reibahlenList || []).forEach((opt, idx) => {
+                    const valToSave = opt.desc ? `${opt.val} (${opt.desc})` : opt.val;
+                    const safeVal = valToSave.replace(/'/g, "´").replace(/"/g, '&quot;');
+                    html += `<div style="position:relative; border-bottom: 1px solid #eee;">
+                                <div class="preset-btn complex-list-item" onclick="selectPreset('${targetId}', '${safeVal}', this)" style="border-bottom:none; padding-right: 50px;">
+                                    <span class="item-title">${opt.val}</span>
+                                    <span class="item-desc">${opt.desc}</span>
+                                </div>
+                                <span class="btn-delete-badge" style="top:50%; right:15px; transform:translateY(-50%);" onclick="deleteReibahle(${idx}, event)" title="Löschen">✖</span>
+                             </div>`;
+                });
+                if(window.reibahlenList.length === 0) {
+                    html += `<div style="padding:15px; color:#999; text-align:center;">Keine Reibahlen gespeichert.</div>`;
+                }
+                html += `</div>`;
+                html += `<input type="hidden" id="${targetId}" class="custom-input">`;
+
+                // Feld für Neueingabe
+                html += `<div style="margin-top: 15px; padding: 15px; background: #fdfdfd; border: 2px dashed #ccc; border-radius: 8px;">
+                            <label style="font-size:1em; font-weight:bold; color:var(--primary); margin-bottom:10px; display:block;">+ Neue Reibahle anlegen</label>
+                            <input type="text" id="new_r_bez" class="wizard-input" placeholder="Bezeichnung (z.B. Reibahle Ø40)" style="margin-bottom:8px; padding:10px;">
+                            <input type="text" id="new_r_art" class="wizard-input" placeholder="Artikelnummer (z.B. 40 577 40000)" style="margin-bottom:12px; padding:10px;">
+                            <button type="button" class="btn-action" style="background: var(--sec); padding: 12px; font-size: 1.1em;" onclick="addNewReibahle()">Speichern & Hinzufügen</button>
+                         </div>`;
 
             } else if (f.type === 'range-slider') {
                 html += `
@@ -1228,7 +1310,6 @@
         
         window.finishWizard();
     };
-
 
     window.removeClampingItem = (index) => {
         wizardClampingData.splice(index, 1);
@@ -1739,6 +1820,7 @@
     window.filterTable = () => { const f=document.getElementById('searchInput').value.toUpperCase(), tr=document.getElementById('tableBody').rows; for(let i=0;i<tr.length;i++) tr[i].style.display=tr[i].innerText.toUpperCase().includes(f)?'':'none'; };
 
     // Start
+    initReibahlenSync(); // Startet den Sync der Reibahlen
     window.initModalDropdown();
     initRealtimeUpdates();
     initEmployeeSync(); 
