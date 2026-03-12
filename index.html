@@ -694,7 +694,7 @@
 
     const clampingDefinitions = {
         "Spannbacken": [
-            { id: "art", label: "Backen-Art", type: "buttons", options: ["Harte Backen", "Weiche Backen", "Krallenbacken"], allowCustom: true },
+            { id: "art", label: "Backen-Art", type: "buttons", options: ["Harte Backen", "Weiche Backen", "Krallenbacken", "Grundbacke Br. 178", "Grundbacke Br. 183"], allowCustom: true },
             { id: "richtung", label: "Spannrichtung", type: "buttons", options: ["Außenspannung", "Innenspannung"], allowCustom: false },
             { id: "durchmesser", label: "Spannbereich (Ø mm)", type: "range-slider" },
             { id: "druck", label: "Spanndruck", type: "buttons", options: ["10 bar", "15 bar", "20 bar", "25 bar", "30 bar"], allowCustom: true }
@@ -1022,7 +1022,7 @@
     };
 
     window.closeWizard = () => {
-        if (typeof window.stopScanner === 'function') window.stopScanner(); // Verhindert, dass die Kamera weiterläuft
+        if (typeof window.stopScanner === 'function') window.stopScanner(); 
         document.getElementById('wizardOverlay').classList.add('hidden');
     };
 
