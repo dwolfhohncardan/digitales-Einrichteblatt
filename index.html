@@ -21,7 +21,8 @@
         .header h1:hover { color: var(--sec); }
 
         .card { background: var(--white); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .nav-btn { padding: 12px 24px; background: var(--primary); color: var(--white); border: none; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 1.1em; }
+        .nav-btn { padding: 12px 24px; background: var(--primary); color: var(--white); border: none; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 1.1em; transition: 0.2s; }
+        .nav-btn:active { transform: scale(0.95); }
         
         /* --- LANDING PAGE --- */
         .landing-wrapper { display: flex; gap: 30px; justify-content: center; align-items: center; min-height: 70vh; flex-wrap: wrap; }
@@ -52,7 +53,8 @@
         .assigned-tools { font-size: 0.95em; margin-bottom: 5px; flex-grow: 1; }
         .assigned-item { background: #f0f8ff; border: 1px solid #d6eaf8; padding: 8px; margin-bottom: 5px; border-radius: 4px; display: flex; gap: 10px; align-items: start; }
         .item-text { flex: 1; line-height: 1.3; }
-        .item-img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; background: #fff; }
+        .item-img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; background: #fff; transition: transform 0.2s; }
+        .item-img:hover { transform: scale(1.05); }
         .btn-slot-add { width: 100%; background: #ecf0f1; border: none; color: #7f8c8d; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 1.3em; padding: 8px 0; transition: 0.2s; }
         .btn-slot-add:hover, .btn-slot-add:active { background: var(--sec); color: white; }
 
@@ -291,7 +293,7 @@
 
             <div id="step5" class="wizard-step">
                 <div class="wizard-question">5. Werkzeuge belegen</div>
-                <p style="font-size:1em; color:#666; margin-bottom:20px;">Tippe auf einen Platz, um ein Werkzeug hinzuzufügen.</p>
+                <p style="font-size:1em; color:#666; margin-bottom:20px;">Tippe auf einen Platz, um ein Werkzeug hinzuzufügen oder zu ändern.</p>
                 <div class="wiz-tool-grid" id="wiz_tool_grid"></div>
                 <div class="wiz-btn-group">
                     <button class="wiz-btn wiz-btn-back" onclick="prevStep(4)">Zurück</button>
@@ -357,6 +359,11 @@
             </div>
         </div>
     </div>
+    
+    <div id="imageLightbox" class="modal-overlay hidden" style="z-index: 6000; background: rgba(0,0,0,0.85);" onclick="closeLightbox()">
+        <div style="position: absolute; top: 15px; right: 25px; color: white; font-size: 2.5em; font-weight: bold; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">&times;</div>
+        <img id="lightboxImg" style="max-width: 95vw; max-height: 95vh; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
+    </div>
 
     <div class="container">
         <div class="header no-print">
@@ -411,7 +418,7 @@
                     <div class="card">
                         <h2>Gesamt-Foto der Aufspannung</h2>
                         <div class="form-group">
-                            <img id="setupPreview" class="preview-img" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
+                            <img id="setupPreview" class="preview-img" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain; cursor: zoom-in;" onclick="openLightbox(this.src)">
                             <label class="no-print" style="margin-top:15px; color:#888;">Foto hinzufügen / ändern:</label>
                             <input type="file" id="setupPhoto" accept="image/*" capture="environment" class="wizard-input no-print" style="padding: 15px;" onchange="previewImage(this, 'setupPreview')">
                             <p id="setup_compress_status" class="no-print" style="color:var(--sec); font-weight:bold; display:none;">Bild wird komprimiert...</p>
@@ -470,9 +477,14 @@
                 <div class="card" id="det_photoCard">
                     <h2>Gesamt-Foto der Aufspannung</h2>
                     <div class="form-group">
-                        <img id="det_setupPreview" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain;">
+                        <img id="det_setupPreview" style="margin-top:10px; max-width: 100%; max-height: 400px; display:none; border: 1px solid #ddd; border-radius:8px; object-fit: contain; cursor: zoom-in;" onclick="openLightbox(this.src)">
                     </div>
                 </div>
+            </div>
+
+            <div style="margin-top: 20px; text-align: center;" class="no-print">
+                <button class="btn-action" onclick="duplicateCurrentSetup()" style="background: var(--accent); max-width: 600px; margin: 0 auto; display: block; padding: 15px;">🔄 Als Vorlage für neues Rüstblatt nutzen</button>
+                <p style="color:#7f8c8d; font-size: 0.9em; margin-top: 10px;">Übernimmt alle Werkzeuge und Spannmittel in ein neues Formular.</p>
             </div>
 
             <div style="display:flex; gap: 15px; margin-top:20px;" class="no-print flex-mobile">
@@ -545,10 +557,13 @@
                 <label>Werkzeug-Foto (Optional)</label>
                 <input type="file" id="modalToolPhoto" accept="image/*" capture="environment" class="wizard-input" style="padding: 15px;" onchange="handleModalPhoto(this)">
                 <p id="modal_compress_status" style="color:var(--sec); font-weight:bold; display:none;">Bild wird komprimiert...</p>
-                <img id="modalToolPreview" style="width:100%; height:200px; background:#eee; display:none; object-fit:contain; border-radius: 8px; margin-top:10px; border: 1px solid #ccc;">
+                <img id="modalToolPreview" style="width:100%; height:200px; background:#eee; display:none; object-fit:contain; border-radius: 8px; margin-top:10px; border: 1px solid #ccc; cursor: zoom-in;" onclick="openLightbox(this.src)">
             </div>
 
-            <button type="button" id="btnModalSave" class="btn-action" onclick="saveToolFromModal()" style="background: var(--success);">Speichern & Schließen</button>
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <button type="button" id="btnModalClear" class="btn-action" onclick="clearToolFromModal()" style="background: #e74c3c; flex: 1; display: none;">🗑️ Leeren</button>
+                <button type="button" id="btnModalSave" class="btn-action" onclick="saveToolFromModal()" style="background: var(--success); flex: 2;">Speichern</button>
+            </div>
         </div>
     </div>
 
@@ -579,9 +594,9 @@
         <span id="fsText">Vollbild</span>
     </button>
 </div> <script type="module">
+    // VÖLLIG BEREINIGTE IMPORTE: Kein Storage mehr!
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc, getDocs, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNddcw2tVtSwdszm46hDoDnMk-zL1PpioMNQvVT9ql585NPAUYxQ6DjhmTGlq9cpoB1Q/exec";
 
@@ -589,20 +604,19 @@
         apiKey: "AIzaSyDJueI6GEUCSKhHOC8CHZlLmDDNylmohkk",
         authDomain: "digitales-einrichteblatt.firebaseapp.com",
         projectId: "digitales-einrichteblatt",
-        storageBucket: "digitales-einrichteblatt.firebasestorage.app",
         messagingSenderId: "656735513232",
         appId: "1:656735513232:web:2a84f80291771f54cd4615"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
     // --- GLOBALS ---
     window.employeeList = []; 
     window.savedSetups = {}; 
-    window.reibahlenList = []; // NEU: Live-Liste für Reibahlen
+    window.reibahlenList = []; 
     window.currentWizClampingType = null;
+    window.currentDetailData = null; 
     
     let currentTIndex = null;
     let currentModalImageSrc = ""; 
@@ -707,6 +721,17 @@
         ]
     };
 
+    // --- LIGHTBOX FUNKTIONEN ---
+    window.openLightbox = (src) => {
+        if(!src || src === "") return;
+        document.getElementById('lightboxImg').src = src;
+        document.getElementById('imageLightbox').classList.remove('hidden');
+    };
+    
+    window.closeLightbox = () => {
+        document.getElementById('imageLightbox').classList.add('hidden');
+    };
+
     // --- RANGE SLIDER LOGIC ---
     window.syncMultiRange = (idPrefix) => {
         let minVal = parseInt(document.getElementById(idPrefix + '_min').value) || 0;
@@ -790,7 +815,8 @@
         };
     };
 
-    window.compressImage = (file, callback, customMaxDim = 800) => {
+    // WICHTIG: Stärker komprimiert, um sicherzustellen, dass alles als Base64 in 1 Firestore-Doc passt!
+    window.compressImage = (file, callback, customMaxDim = 600) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = event => {
@@ -805,7 +831,7 @@
                 canvas.width = width; canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                callback(canvas.toDataURL('image/jpeg', 0.8)); 
+                callback(canvas.toDataURL('image/jpeg', 0.6)); // Qualität auf 60% für kleinere Dateigröße
             }
         }
     };
@@ -912,7 +938,6 @@
                 ]; 
                 setDoc(reibDocRef, { list: window.reibahlenList }); 
             }
-            // Aktualisiere Modal in Echtzeit, falls es gerade offen ist
             if(!document.getElementById('toolModal').classList.contains('hidden') && document.getElementById('modalToolType').value === 'Reibahle') {
                 window.renderToolFields();
             }
@@ -1029,7 +1054,7 @@
         currentMainPhotoSrc = "";
         
         window.currentDuplicateDocId = null;
-        window.currentDuplicatePhotoUrl = "";
+        window.currentDuplicatePhotoUrl = ""; // Dies speichert jetzt unseren Base64 String
         
         window.renderWizardToolGrid(); 
         window.showStep(1);
@@ -1111,7 +1136,8 @@
             if (!checkSnapshot.empty) {
                 const docData = checkSnapshot.docs[0].data();
                 window.currentDuplicateDocId = checkSnapshot.docs[0].id;
-                window.currentDuplicatePhotoUrl = docData.photoUrl || "";
+                // photoUrl heisst so, hält aber unseren Base64 String
+                window.currentDuplicatePhotoUrl = docData.photoUrl || ""; 
                 
                 document.getElementById('duplicateMessage').innerText = `Rüstblatt für diesen Artikel auf dieser Maschine bereits von ${docData.employee || 'Unbekannt'} erstellt.`;
                 document.getElementById('duplicateModal').classList.remove('hidden');
@@ -1148,8 +1174,43 @@
         }
     };
     
+    window.renderCreateToolGrid = () => {
+        const cont = document.getElementById('toolContainer'); 
+        if(!cont) return;
+        cont.innerHTML = '';
+        for(let i=1; i<=12; i++) {
+            const box = document.createElement('div'); box.className = 'tool-box';
+            let content = `<div class="tool-header"><span class="t-label">T${i}</span></div><div class="assigned-tools" id="tools_list_${i}">`;
+            
+            if(wizardToolsData[i] && wizardToolsData[i].html) {
+                content += wizardToolsData[i].html;
+            }
+            
+            const btnText = (wizardToolsData[i] && wizardToolsData[i].type) ? '✏️ Ändern' : '+ Werkzeug hinzufügen';
+            content += `</div><button type="button" class="btn-slot-add no-print" onclick="openModal(${i})">${btnText}</button>`;
+            
+            box.innerHTML = content;
+            cont.appendChild(box);
+        }
+    };
+
     window.syncSlider = (id,v) => { const el=document.getElementById(id); if(el) el.value=v; };
     window.syncNum = (id,v) => { const el=document.getElementById(id); if(el) el.value=v; };
+    
+    window.filterComplexList = (inputEl) => {
+        const filter = inputEl.value.toUpperCase();
+        const container = inputEl.nextElementSibling; 
+        const items = container.querySelectorAll('.complex-list-item');
+        items.forEach(item => {
+            const text = item.innerText.toUpperCase();
+            const wrapper = item.parentElement;
+            if(wrapper && wrapper.style.position === 'relative') {
+                wrapper.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+            } else {
+                item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+            }
+        });
+    };
 
     window.renderDynamicFields = (definitionList, containerId, prefix) => {
         const c = document.getElementById(containerId);
@@ -1180,6 +1241,7 @@
                 html += `<input type="${inputType}" id="${targetId}" class="custom-input" placeholder="${ph}">`;
             
             } else if (f.type === 'complex-list') {
+                html += `<input type="text" class="wizard-input list-search" placeholder="🔍 ${f.label} durchsuchen..." onkeyup="filterComplexList(this)" style="margin-bottom:10px; border-color: var(--sec);">`;
                 html += `<div class="complex-list-container">`;
                 f.options.forEach(opt => {
                     const valToSave = opt.desc ? `${opt.val} (${opt.desc})` : opt.val;
@@ -1194,8 +1256,8 @@
                 const ph = f.allowCustom ? '...oder eigene Wendeplatte eingeben' : '';
                 html += `<input type="${inputType}" id="${targetId}" class="custom-input" placeholder="${ph}">`;
 
-            // --- NEU: DYNAMISCHE REIBAHLEN LISTE ---
             } else if (f.type === 'dynamic-reibahlen-list') {
+                html += `<input type="text" class="wizard-input list-search" placeholder="🔍 ${f.label} durchsuchen..." onkeyup="filterComplexList(this)" style="margin-bottom:10px; border-color: var(--sec);">`;
                 html += `<div class="complex-list-container">`;
                 (window.reibahlenList || []).forEach((opt, idx) => {
                     const valToSave = opt.desc ? `${opt.val} (${opt.desc})` : opt.val;
@@ -1214,7 +1276,6 @@
                 html += `</div>`;
                 html += `<input type="hidden" id="${targetId}" class="custom-input">`;
 
-                // Feld für Neueingabe
                 html += `<div style="margin-top: 15px; padding: 15px; background: #fdfdfd; border: 2px dashed #ccc; border-radius: 8px;">
                             <label style="font-size:1em; font-weight:bold; color:var(--primary); margin-bottom:10px; display:block;">+ Neue Reibahle anlegen</label>
                             <input type="text" id="new_r_bez" class="wizard-input" placeholder="Bezeichnung (z.B. Reibahle Ø40)" style="margin-bottom:8px; padding:10px;">
@@ -1436,16 +1497,87 @@
     window.openModal = (i) => {
         currentTIndex = i;
         document.getElementById('modalTargetT').innerText = "T"+i;
-        document.getElementById('modalLenSlider').value=50; document.getElementById('modalLenNum').value=50;
+        
+        document.getElementById('modalLenSlider').value = 50; 
+        document.getElementById('modalLenNum').value = 50;
         document.getElementById('modalCustomTypeInput').classList.add('hidden');
         document.getElementById('modalToolType').classList.remove('hidden');
-        document.getElementById('modalToolType').selectedIndex=0;
-        document.getElementById('modalToolPreview').style.display='none';
-        currentModalImageSrc=""; document.getElementById('modalToolPhoto').value="";
-        window.renderToolFields();
+        document.getElementById('modalToolType').selectedIndex = 0;
+        document.getElementById('modalToolPreview').style.display = 'none';
+        currentModalImageSrc = ""; 
+        document.getElementById('modalToolPhoto').value = "";
+        
+        const existingData = wizardToolsData[i];
+        
+        if (existingData && existingData.rawValues) {
+            const rv = existingData.rawValues;
+            
+            if (rv.isCust) {
+                document.getElementById('modalCustomTypeInput').classList.remove('hidden');
+                document.getElementById('modalToolType').classList.add('hidden');
+                document.getElementById('modalCustomTypeInput').value = rv.customType || "";
+                window.renderToolFields();
+                setTimeout(() => {
+                    if(document.getElementById('dyn_tool_details')) document.getElementById('dyn_tool_details').value = rv.customDetails || "";
+                }, 10);
+            } else {
+                document.getElementById('modalToolType').value = rv.type;
+                window.renderToolFields();
+                
+                setTimeout(() => {
+                    (toolDefinitions[rv.type]||[]).forEach(f => {
+                        if (rv[f.id]) {
+                            const el = document.getElementById(`dyn_tool_${f.id}`);
+                            if(el) {
+                                el.value = rv[f.id];
+                                const parent = el.parentElement;
+                                if(parent) {
+                                    parent.querySelectorAll('.preset-btn').forEach(btn => {
+                                        const safeVal = rv[f.id].replace(/'/g, "´").replace(/"/g, '&quot;');
+                                        if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(safeVal)) {
+                                            btn.classList.add('active');
+                                        } else if (btn.innerText.trim() === rv[f.id].trim()) {
+                                            btn.classList.add('active');
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    });
+                }, 10);
+            }
+            
+            document.getElementById('modalLenNum').value = rv.len || 50;
+            document.getElementById('modalLenSlider').value = rv.len || 50;
+            
+            // Abwärtskompatibilität für alte Daten mit imgUrl, aber ab jetzt ist alles Base64
+            if (existingData.imgUrl) {
+                currentModalImageSrc = existingData.imgUrl;
+                document.getElementById('modalToolPreview').src = currentModalImageSrc;
+                document.getElementById('modalToolPreview').style.display = 'block';
+            }
+            
+            document.getElementById('btnModalClear').style.display = 'block';
+        } else {
+            window.renderToolFields();
+            document.getElementById('btnModalClear').style.display = 'none';
+        }
+
         document.getElementById('toolModal').classList.remove('hidden');
     };
+    
     window.closeModal = () => document.getElementById('toolModal').classList.add('hidden');
+    
+    window.clearToolFromModal = () => {
+        if(!currentTIndex) return;
+        delete wizardToolsData[currentTIndex];
+        
+        window.renderWizardToolGrid();
+        if(!document.getElementById('create-view').classList.contains('hidden')) {
+            window.renderCreateToolGrid();
+        }
+        window.closeModal();
+    };
     
     window.handleModalPhoto = (inp) => { 
         if(inp.files[0]){
@@ -1466,24 +1598,33 @@
         btnSave.innerText = "Speichere...";
         btnSave.disabled = true;
 
-        let imgUrl = "";
-        if (currentModalImageSrc) {
-            try {
-                const imgRef = ref(storage, `tools/${Date.now()}_t${currentTIndex}.jpg`);
-                await uploadString(imgRef, currentModalImageSrc, 'data_url');
-                imgUrl = await getDownloadURL(imgRef);
-            } catch (e) { console.error("Fehler beim Bildupload:", e); }
-        }
+        // BILD LOKAL ALS BASE64 SPEICHERN (Kein Cloud-Storage Upload mehr!)
+        let imgBase64 = currentModalImageSrc || "";
 
         let type, details=[];
+        let rawValues = {}; 
+
         const isCust = !document.getElementById('modalCustomTypeInput').classList.contains('hidden');
-        if(isCust) { type = document.getElementById('modalCustomTypeInput').value.trim()||"Werkzeug"; let d=document.getElementById('dyn_tool_details').value.trim(); if(d) details.push(d); }
+        if(isCust) { 
+            type = document.getElementById('modalCustomTypeInput').value.trim()||"Werkzeug"; 
+            let d=document.getElementById('dyn_tool_details').value.trim(); 
+            if(d) details.push(d); 
+            
+            rawValues.isCust = true;
+            rawValues.customType = type;
+            rawValues.customDetails = d;
+        }
         else { 
             type=document.getElementById('modalToolType').value; 
+            rawValues.isCust = false;
+            rawValues.type = type;
+            
             (toolDefinitions[type]||[]).forEach(f=>{ 
                 const el=document.getElementById(`dyn_tool_${f.id}`); 
                 if(el && el.value){ 
                     let val = el.value.trim();
+                    rawValues[f.id] = val; 
+                    
                     if(f.id==='diam') details.push(`Ø${val}${f.unit||''}`); 
                     else if(f.id==='radius') details.push(`R${val}${f.unit||''}`);
                     else if(f.id==='ik') details.push(`IK: ${val}`);
@@ -1494,18 +1635,28 @@
         }
         
         const len = document.getElementById('modalLenNum').value;
-        const imgHtml = imgUrl ? `<img src="${imgUrl}" class="item-img">` : '';
-        const itemHtml = `<div class="assigned-item">${imgHtml}<div class="item-text"><strong>${type}</strong>${details.join(', ')}<br><span style="color:#666;font-size:0.9em">L: ${len} mm</span></div></div>`;
+        rawValues.len = len;
+
+        const imgHtml = imgBase64 ? `<img src="${imgBase64}" class="item-img" style="cursor:zoom-in;" onclick="event.stopPropagation(); openLightbox('${imgBase64}')">` : '';
+        const detailHtml = details.length > 0 ? `<br>${details.join(', ')}` : '';
+        const itemHtml = `<div class="assigned-item">${imgHtml}<div class="item-text"><strong>${type}</strong>${detailHtml}<br><span style="color:#666;font-size:0.9em">L: ${len} mm</span></div></div>`;
         
-        if(!wizardToolsData[currentTIndex]) wizardToolsData[currentTIndex] = { html: "", type: "", details: [], len: len, imgUrl: imgUrl };
-        wizardToolsData[currentTIndex].html += itemHtml;
-        wizardToolsData[currentTIndex].type = type;
-        wizardToolsData[currentTIndex].details = details;
-        wizardToolsData[currentTIndex].len = len;
-        wizardToolsData[currentTIndex].imgUrl = imgUrl;
+        wizardToolsData[currentTIndex] = { 
+            html: itemHtml, 
+            type: type, 
+            details: details, 
+            len: len, 
+            imgUrl: imgBase64, // Hier liegt jetzt der komplette Base64 String drin
+            rawValues: rawValues 
+        };
 
         window.renderWizardToolGrid();
-        btnSave.innerText = "Speichern & Schließen";
+        
+        if(!document.getElementById('create-view').classList.contains('hidden')) {
+            window.renderCreateToolGrid();
+        }
+
+        btnSave.innerText = "Speichern";
         btnSave.disabled = false;
         window.closeModal();
     };
@@ -1530,16 +1681,7 @@
         document.getElementById('employee').value = document.getElementById('wiz_employee').value.trim();
 
         window.renderClampingUI();
-
-        const cont = document.getElementById('toolContainer'); cont.innerHTML = '';
-        for(let i=1; i<=12; i++) {
-            const box = document.createElement('div'); box.className = 'tool-box';
-            let content = `<div class="tool-header"><span class="t-label">T${i}</span></div><div class="assigned-tools" id="tools_list_${i}">`;
-            if(wizardToolsData[i]) content += wizardToolsData[i].html;
-            content += `</div><button type="button" class="btn-slot-add no-print" onclick="openModal(${i})">+ Werkzeug anpassen</button>`;
-            box.innerHTML = content;
-            cont.appendChild(box);
-        }
+        window.renderCreateToolGrid(); 
 
         if (currentMainPhotoSrc) {
             document.getElementById('setupPreview').src = currentMainPhotoSrc;
@@ -1552,7 +1694,36 @@
         window.switchView('create');
     };
 
-    window.populateHiddenPdfTemplate = (art, seq, mach, emp, photoUrl) => {
+    window.duplicateCurrentSetup = () => {
+        const data = window.currentDetailData;
+        if(!data) return;
+
+        document.getElementById('artNr').value = data.artNr + " (Kopie)";
+        document.getElementById('sequence').value = data.sequence || "";
+        document.getElementById('machine').value = data.machine || "";
+        document.getElementById('employee').value = data.employee || "";
+
+        wizardToolsData = JSON.parse(JSON.stringify(data.wizardToolsData || {}));
+        wizardClampingData = JSON.parse(JSON.stringify(data.wizardClampingData || []));
+        currentMainPhotoSrc = data.photoUrl || "";
+        
+        window.renderClampingUI();
+        window.renderCreateToolGrid(); 
+
+        if (currentMainPhotoSrc) {
+            document.getElementById('setupPreview').src = currentMainPhotoSrc;
+            document.getElementById('setupPreview').style.display = 'block';
+        } else {
+            document.getElementById('setupPreview').style.display = 'none';
+        }
+
+        window.currentDuplicateDocId = null; 
+        
+        window.switchView('create');
+        window.scrollTo(0, 0);
+    };
+
+    window.populateHiddenPdfTemplate = (art, seq, mach, emp, photoBase64) => {
         document.getElementById('pdfDate').innerText = new Date().toLocaleDateString();
         document.getElementById('pdfArt').innerText = art;
         document.getElementById('pdfSeq').innerText = seq;
@@ -1576,7 +1747,8 @@
             if(wizardToolsData[i] && wizardToolsData[i].type) {
                 hasTools = true;
                 const t = wizardToolsData[i];
-                const imgCell = t.imgUrl ? `<img src="${t.imgUrl}" class="pdf-t-img">` : '';
+                const imgSrc = t.imgUrl; // Das ist jetzt ein sicherer Base64 String
+                const imgCell = imgSrc ? `<img src="${imgSrc}" class="pdf-t-img">` : '';
                 tt.innerHTML += `
                     <tr class="avoid-break">
                         <th style="width: 15%; text-align: center; font-size: 14pt;">T${i}</th>
@@ -1589,8 +1761,8 @@
         if(!hasTools) tt.innerHTML = '<tr><td colspan="3" style="color:#888;">Keine Werkzeuge belegt</td></tr>';
 
         const photoSection = document.getElementById('pdfPhotoSection');
-        if(photoUrl) {
-            document.getElementById('pdfSetupImg').src = photoUrl;
+        if(photoBase64) {
+            document.getElementById('pdfSetupImg').src = photoBase64;
             photoSection.style.display = 'block';
         } else {
             photoSection.style.display = 'none';
@@ -1610,28 +1782,45 @@
             return;
         }
 
+        let existingDocId = window.currentDuplicateDocId;
+        let existingPhotoUrl = window.currentDuplicatePhotoUrl;
+
+        if (!existingDocId) {
+            try {
+                const checkQuery = query(collection(db, "ruestblaetter"), 
+                    where("artNr", "==", art), 
+                    where("sequence", "==", seq), 
+                    where("machine", "==", mach)
+                );
+                const checkSnapshot = await getDocs(checkQuery);
+                
+                if (!checkSnapshot.empty) {
+                    const docData = checkSnapshot.docs[0].data();
+                    const overwrite = confirm(`⚠️ Duplikat gefunden!\n\nFür den Artikel '${art}' auf der Maschine '${mach}' gibt es bereits ein Rüstblatt (erstellt von ${docData.employee || 'Unbekannt'}).\n\nMöchtest du das bestehende Rüstblatt überschreiben?`);
+                    
+                    if (!overwrite) {
+                        return; // Speichern abbrechen
+                    }
+                    
+                    existingDocId = checkSnapshot.docs[0].id;
+                    existingPhotoUrl = docData.photoUrl || "";
+                }
+            } catch (error) {
+                console.error("Fehler bei der Duplikatsabfrage:", error);
+            }
+        }
+
         const btn = document.getElementById('btnProcess');
         btn.innerText = "Bitte warten... PDF wird erzeugt & gesendet";
         btn.disabled = true;
 
-        let existingDocId = window.currentDuplicateDocId;
-        let existingPhotoUrl = window.currentDuplicatePhotoUrl;
-
-        let mainPhotoUrl = "";
-        if (currentMainPhotoSrc) {
-            try {
-                const imgRef = ref(storage, `setups/${Date.now()}_setup.jpg`);
-                await uploadString(imgRef, currentMainPhotoSrc, 'data_url');
-                mainPhotoUrl = await getDownloadURL(imgRef);
-            } catch (e) { console.error("Foto-Upload fehlgeschlagen:", e); }
-        } else if (existingDocId) {
-            mainPhotoUrl = existingPhotoUrl;
-        }
-
+        // BILD DIREKT ALS BASE64 ÜBERNEHMEN (Kein Cloud-Storage Upload)
+        let mainPhotoBase64 = currentMainPhotoSrc || existingPhotoUrl;
+        
         try {
             const dataToSave = {
                 artNr: art, sequence: seq, machine: mach, employee: emp,
-                photoUrl: mainPhotoUrl,
+                photoUrl: mainPhotoBase64, // Wir speichern den kompletten String in Firestore
                 toolsHtml: document.getElementById('toolContainer').innerHTML,
                 clampingHtml: document.getElementById('clampingContainer').innerHTML,
                 wizardToolsData: wizardToolsData,     
@@ -1640,13 +1829,21 @@
                 dateString: new Date().toLocaleDateString()
             };
 
-            if (existingDocId) {
-                await setDoc(doc(db, "ruestblaetter", existingDocId), dataToSave);
-            } else {
-                await addDoc(collection(db, "ruestblaetter"), dataToSave);
+            // IN FIRESTORE SPEICHERN
+            try {
+                if (existingDocId) {
+                    await setDoc(doc(db, "ruestblaetter", existingDocId), dataToSave);
+                } else {
+                    await addDoc(collection(db, "ruestblaetter"), dataToSave);
+                }
+            } catch(e) {
+                console.error(e);
+                alert("⚠️ Speichern in der Datenbank fehlgeschlagen. Sind deine Firestore Rules abgelaufen?");
+                throw new Error("DB aborted");
             }
 
-            window.populateHiddenPdfTemplate(art, seq, mach, emp, currentMainPhotoSrc || mainPhotoUrl);
+            // PDF BAUEN
+            window.populateHiddenPdfTemplate(art, seq, mach, emp, mainPhotoBase64);
             const templateEl = document.getElementById('hiddenPdfTemplate');
             const mainApp = document.getElementById('mainApp');
             
@@ -1658,29 +1855,43 @@
                 margin: 0, 
                 filename: `Ruestblatt_${art}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 }, 
+                html2canvas: { scale: 2 }, 
                 pagebreak: { mode: 'css' }, 
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            const pdfBase64Url = await html2pdf().set(opt).from(templateEl).outputPdf('datauristring');
-            const base64Data = pdfBase64Url.split(',')[1];
+            let base64PdfData = "";
+            try {
+                const pdfBase64Url = await html2pdf().set(opt).from(templateEl).outputPdf('datauristring');
+                base64PdfData = pdfBase64Url.split(',')[1];
+            } catch (err) {
+                console.error("PDF Fehler:", err);
+                alert("⚠️ Das PDF konnte nicht generiert werden.");
+                throw err;
+            }
 
             templateEl.style.display = 'none';
             mainApp.style.display = 'block';
 
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: "POST",
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                    pdfBase64: base64Data,
-                    artNr: art,
-                    machine: mach,
-                    employee: emp
-                })
-            });
+            // E-MAIL VERSAND
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        pdfBase64: base64PdfData,
+                        artNr: art,
+                        machine: mach,
+                        employee: emp
+                    })
+                });
+            } catch (err) {
+                console.error("Mail Fehler:", err);
+                alert("⚠️ PDF in Datenbank gespeichert, aber E-Mail-Versand fehlgeschlagen (Google Apps Script blockiert?).");
+                throw err;
+            }
             
-            alert("Erfolgreich in der Cloud gespeichert und als PDF-Mail versendet!");
+            alert("Erfolgreich in der Datenbank gespeichert und als PDF-Mail versendet!");
             
             document.getElementById('setupForm').reset();
             document.getElementById('toolContainer').innerHTML = '';
@@ -1691,14 +1902,16 @@
             wizardClampingData = [];
             window.currentDuplicateDocId = null;
             window.currentDuplicatePhotoUrl = "";
+            window.currentDetailData = null;
+            window.switchView('landing');
 
         } catch (error) {
-            console.error("Fehler beim Speichern/Senden:", error);
-            alert("Es gab einen Fehler. Bitte Internetverbindung prüfen.");
+            console.error("Gesamtprozess gestoppt:", error);
         } finally {
             btn.innerText = "Speichern & Automatisch als E-Mail senden";
             btn.disabled = false;
-            window.switchView('landing');
+            document.getElementById('hiddenPdfTemplate').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
         }
     };
 
@@ -1724,19 +1937,19 @@
         window.scrollTo(0, 0);
 
         try {
-            const opt = { margin: 0, filename: `Ruestblatt_${art}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 }, pagebreak: { mode: 'css' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            const opt = { margin: 0, filename: `Ruestblatt_${art}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, pagebreak: { mode: 'css' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
             const pdfBase64Url = await html2pdf().set(opt).from(templateEl).outputPdf('datauristring');
-            const base64Data = pdfBase64Url.split(',')[1];
+            const base64PdfData = pdfBase64Url.split(',')[1];
 
             await fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ pdfBase64: base64Data, artNr: art, machine: mach, employee: emp })
+                body: JSON.stringify({ pdfBase64: base64PdfData, artNr: art, machine: mach, employee: emp })
             });
             alert("Das Rüstblatt wurde erfolgreich erneut per E-Mail gesendet!");
         } catch(e) { 
             console.error(e);
-            alert("Fehler beim Versenden der Mail!"); 
+            alert("⚠️ Fehler beim Erstellen oder Versenden der Mail!"); 
         }
 
         templateEl.style.display = 'none';
@@ -1750,6 +1963,8 @@
 
         const data = window.savedSetups[docId];
         if(!data) return;
+
+        window.currentDetailData = data;
 
         document.getElementById('det_artNr').innerText = data.artNr;
         document.getElementById('det_sequence').innerText = data.sequence;
@@ -1820,7 +2035,7 @@
     window.filterTable = () => { const f=document.getElementById('searchInput').value.toUpperCase(), tr=document.getElementById('tableBody').rows; for(let i=0;i<tr.length;i++) tr[i].style.display=tr[i].innerText.toUpperCase().includes(f)?'':'none'; };
 
     // Start
-    initReibahlenSync(); // Startet den Sync der Reibahlen
+    initReibahlenSync();
     window.initModalDropdown();
     initRealtimeUpdates();
     initEmployeeSync(); 
