@@ -383,6 +383,17 @@
         </div>
     </div>
     
+    <div id="successModal" class="modal-overlay hidden" style="z-index: 6000;">
+        <div class="modal-content" style="text-align: center; max-width: 450px;">
+            <div style="font-size: 4em; margin-bottom: 10px;">🤝😊</div>
+            <h2 style="color: var(--success); margin-top: 0; margin-bottom: 15px; font-size: 1.8em;">Erfolgreich gesendet!</h2>
+            <p style="font-size: 1.2em; color: #555; margin-bottom: 25px; line-height: 1.4;">
+                Vielen Dank für die Zusammenarbeit!
+            </p>
+            <button type="button" class="btn-action" style="background: var(--success);" onclick="closeSuccessModal()">Schließen & Zurück zur Startseite</button>
+        </div>
+    </div>
+
     <div id="imageLightbox" class="modal-overlay hidden" style="z-index: 6000; background: rgba(0,0,0,0.85);" onclick="closeLightbox()">
         <div style="position: absolute; top: 15px; right: 25px; color: white; font-size: 2.5em; font-weight: bold; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">&times;</div>
         <img id="lightboxImg" style="max-width: 95vw; max-height: 95vh; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
@@ -417,19 +428,29 @@
             <div class="landing-tile" onclick="openSettingsModal()">
                 <div class="tile-icon">⚙️</div>
                 <div class="tile-text">Einstellungen</div>
-                <div class="tile-sub">Logo anpassen & Archiv bearbeiten</div>
+                <div class="tile-sub">Logo, Mitarbeiter & Archiv</div>
             </div>
         </div>
 
         <div id="supply-view" class="hidden">
             <div class="card">
                 <h2 style="color: var(--primary); margin-top: 0; font-size: 1.8em;">Materialversorgung anfordern</h2>
-                <p style="color: #555; font-size: 1.1em;">Bitte wähle die Maschinen aus, für die Material aus dem Lager geholt werden soll:</p>
-                <div id="supplyMachineList" class="supply-grid"></div>
+                
+                <div class="form-group" style="margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px;">
+                    <label style="font-size: 1.2em; color: var(--primary);">1. Wer fordert an?</label>
+                    <div class="wiz-grid-select" id="supply_employee_grid"></div>
+                    <input type="hidden" id="supply_employee">
+                </div>
+
+                <div class="form-group">
+                    <label style="font-size: 1.2em; color: var(--primary);">2. Für welche Maschinen?</label>
+                    <p style="color: #666; font-size: 0.9em; margin-top: 0;">Mehrfachauswahl durch Antippen möglich.</p>
+                    <div id="supplyMachineList" class="wiz-grid-select"></div>
+                </div>
                 
                 <div style="margin-top: 40px; text-align: center; border-top: 2px solid #eee; padding-top: 30px;">
                     <button id="btnSendSupply" class="btn-action" style="background: var(--accent); max-width: 600px; margin: 0 auto; display: block;" onclick="sendMaterialRequest()">
-                        📧 Materialbestellung an d.wolf@hohn-cardan.de senden
+                        📦 Material anfordern
                     </button>
                 </div>
             </div>
@@ -570,6 +591,12 @@
             </div>
 
             <div class="form-group" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #eee;">
+                <label>Mitarbeiterverwaltung</label>
+                <p style="color:#666; font-size:0.9em; margin-top:0;">Mitarbeiter für Rüstblatt und Materialanforderung verwalten.</p>
+                <div class="wiz-grid-select" id="settings_employee_grid"></div>
+            </div>
+
+            <div class="form-group" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #eee;">
                 <label style="color: #e74c3c;">Archiv bearbeiten</label>
                 <p style="color:#666; font-size:0.9em; margin-top:0;">Hier kannst du fehlerhafte Rüstblätter endgültig löschen.</p>
                 <button type="button" class="btn-action" style="background: #e74c3c; font-size: 1em; padding: 12px;" onclick="startArchiveEditMode()">Archiv öffnen & Einträge löschen</button>
@@ -649,8 +676,17 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc, getDocs, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-    // --- NEUE URL HIER FEST INTEGRIERT ---
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9WnQ7-04qETNiI8lbnfcEwvVj3pzMIJZiccSzcQvPWruZS2vHLJM1aEie8EbUkZjDcw/exec";
+    // ==========================================
+    // EINSTELLUNGEN FÜR DEINE E-MAILS & SERVER
+    // ==========================================
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2l5q4xHalhJKmdPBeJ9cRKB_PCisWhcBfAPl1GqxlT470TPHbJmXcpnPRUptkkjzScg/exec";
+    
+    // ➔ Hier definierst du, wo das Rüstblatt (PDF) landen soll:
+    const EMAIL_RUESTBLATT = "d.wolf@hohn-cardan.de";
+    
+    // ➔ Hier definierst du, wer alles die Materialanforderung bekommen soll (mehrere mit Komma trennen):
+    const EMAIL_MATERIAL = "d.wolf@hohn-cardan.de, e.oks@hohn-cardan.de";
+    // ==========================================
 
     const firebaseConfig = {
         apiKey: "AIzaSyDJueI6GEUCSKhHOC8CHZlLmDDNylmohkk",
@@ -741,31 +777,43 @@
     };
 
     // --- MATERIALVERSORGUNG LOGIK ---
+    
+    window.selectSupplyEmployee = (emp, btnElement) => {
+        document.getElementById('supply_employee').value = emp;
+        document.querySelectorAll('#supply_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
+        btnElement.classList.add('selected');
+    };
+
     window.renderSupplyMachines = () => {
         const container = document.getElementById('supplyMachineList');
         container.innerHTML = '';
+        
         const allMachines = [...new Set(Object.values(machineConfig).flat())].sort();
+        allMachines.push("Zentrieranlage");
         
         allMachines.forEach(m => {
-            const div = document.createElement('div');
-            div.className = 'supply-item';
-            div.innerHTML = `<input type="checkbox" value="${m}" style="transform: scale(1.5); margin: 0;"> <span style="font-size: 1.2em; font-weight: bold; color: var(--primary);">${m}</span>`;
+            const btn = document.createElement('div');
+            btn.className = 'wiz-option-btn';
+            btn.style.padding = '15px';
+            btn.innerText = m;
             
-            // Klick auf die ganze Box toggelt die Checkbox
-            div.onclick = (e) => {
-                if(e.target.tagName !== 'INPUT') {
-                    const cb = div.querySelector('input');
-                    cb.checked = !cb.checked;
-                }
-                div.classList.toggle('selected', div.querySelector('input').checked);
+            btn.onclick = () => {
+                btn.classList.toggle('selected');
             };
-            container.appendChild(div);
+            container.appendChild(btn);
         });
+
+        document.getElementById('supply_employee').value = '';
+        document.querySelectorAll('#supply_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
     };
 
     window.sendMaterialRequest = async () => {
-        const selected = Array.from(document.querySelectorAll('#supplyMachineList input:checked')).map(i => i.value);
-        if(selected.length === 0) return alert("Bitte wähle zuerst mindestens eine Maschine aus.");
+        const emp = document.getElementById('supply_employee').value;
+        if(!emp) return alert("Bitte wähle zuerst aus, wer das Material anfordert (Schritt 1).");
+
+        const selectedNodes = document.querySelectorAll('#supplyMachineList .wiz-option-btn.selected');
+        const selected = Array.from(selectedNodes).map(btn => btn.innerText);
+        if(selected.length === 0) return alert("Bitte wähle mindestens eine Maschine aus (Schritt 2).");
 
         const btn = document.getElementById('btnSendSupply');
         btn.disabled = true;
@@ -778,23 +826,25 @@
                 body: JSON.stringify({
                     type: "MATERIAL_REQUEST",
                     machines: selected,
-                    recipient: "d.wolf@hohn-cardan.de"
+                    employee: emp, 
+                    recipient: EMAIL_MATERIAL // ➔ Nutzt die Einstellung von ganz oben
                 })
             });
-            alert("✅ Materialbestellung wurde erfolgreich an Herrn Wolf versendet!");
             
-            // Haken wieder entfernen
-            document.querySelectorAll('#supplyMachineList input:checked').forEach(cb => { 
-                cb.checked = false; 
-                cb.parentElement.classList.remove('selected'); 
-            });
-            window.switchView('landing');
+            document.getElementById('successModal').classList.remove('hidden');
+            selectedNodes.forEach(btn => btn.classList.remove('selected'));
+            
         } catch (e) {
             alert("⚠️ Fehler beim Senden. Bitte prüfe die Internetverbindung des Tablets.");
         } finally {
             btn.disabled = false;
-            btn.innerHTML = "📧 Materialbestellung an d.wolf@hohn-cardan.de senden";
+            btn.innerHTML = "📦 Material anfordern";
         }
+    };
+
+    window.closeSuccessModal = () => {
+        document.getElementById('successModal').classList.add('hidden');
+        window.switchView('landing');
     };
 
 
@@ -806,20 +856,16 @@
             html5QrCode = new Html5Qrcode("reader");
         }
         
-        // Optimiert für 1D Barcodes (breit und flach)
         const config = { fps: 10, qrbox: { width: 300, height: 100 } };
         
         html5QrCode.start(
             { facingMode: "environment" }, 
             config,
             (decodedText, decodedResult) => {
-                // Erfolg: Text ins Feld schreiben und Scanner schließen
                 document.getElementById('wiz_artNr').value = decodedText;
                 window.stopScanner();
             },
-            (errorMessage) => {
-                // Fehler beim Live-Scan ignorieren wir, da die Kamera ununterbrochen sucht
-            }
+            (errorMessage) => { }
         ).catch((err) => {
             console.error("Scanner Start Fehler:", err);
             alert("Kamera konnte nicht gestartet werden. Bitte erlaube den Zugriff auf die Kamera.");
@@ -832,7 +878,6 @@
             html5QrCode.stop().then(() => {
                 document.getElementById('scannerContainer').classList.add('hidden');
             }).catch((err) => {
-                console.error("Scanner Stop Fehler:", err);
                 document.getElementById('scannerContainer').classList.add('hidden');
             });
         } else {
@@ -1041,18 +1086,40 @@
         if (pwd === "Gelenkwelle") { window.wendeplattenList.splice(idx, 1); setDoc(doc(db, "config", "wendeplatten"), { list: window.wendeplattenList }); } else if (pwd !== null) { alert("Falsches Passwort!"); }
     };
 
+    // --- MITARBEITER VERWALTUNG (Zentralisiert) ---
     function initEmployeeSync() {
         const empDocRef = doc(db, "config", "employees");
         onSnapshot(empDocRef, (docSnap) => {
             if (docSnap.exists()) { window.employeeList = docSnap.data().list || []; } else { window.employeeList = ["Lange", "Oks", "Saric"]; setDoc(empDocRef, { list: window.employeeList }); }
-            window.renderEmployeeGrid();
+            window.renderEmployeeLists();
         });
     }
 
-    window.renderEmployeeGrid = () => {
-        const grid = document.getElementById('wiz_employee_grid'); grid.innerHTML = '';
-        window.employeeList.forEach(emp => { grid.innerHTML += `<div style="position: relative;"><div class="wiz-option-btn" onclick="selectWizEmployee('${emp}', this)">${emp}</div><div class="btn-delete-badge" onclick="deleteEmployee('${emp}', event)" title="Mitarbeiter löschen">✖</div></div>`; });
-        grid.innerHTML += `<div class="wiz-option-btn" style="background:#eaf2f8; color:var(--sec); border-style: dashed;" onclick="addEmployee()"><span style="font-size:1.5em; margin-right:8px;">+</span> Neu</div>`;
+    window.renderEmployeeLists = () => {
+        const sGrid = document.getElementById('settings_employee_grid');
+        if(sGrid) {
+            sGrid.innerHTML = '';
+            window.employeeList.forEach(emp => { 
+                sGrid.innerHTML += `<div style="position: relative;"><div class="wiz-option-btn" style="padding:15px; cursor:default;">${emp}</div><div class="btn-delete-badge" onclick="deleteEmployee('${emp}', event)" title="Mitarbeiter löschen">✖</div></div>`; 
+            });
+            sGrid.innerHTML += `<div class="wiz-option-btn" style="background:#eaf2f8; color:var(--sec); border-style: dashed; padding:15px;" onclick="addEmployee()"><span style="font-size:1.5em; margin-right:8px;">+</span> Neu</div>`;
+        }
+
+        const wGrid = document.getElementById('wiz_employee_grid');
+        if(wGrid) {
+            wGrid.innerHTML = '';
+            window.employeeList.forEach(emp => { 
+                wGrid.innerHTML += `<div class="wiz-option-btn" onclick="selectWizEmployee('${emp}', this)">${emp}</div>`; 
+            });
+        }
+
+        const supGrid = document.getElementById('supply_employee_grid');
+        if(supGrid) {
+            supGrid.innerHTML = '';
+            window.employeeList.forEach(emp => { 
+                supGrid.innerHTML += `<div class="wiz-option-btn" style="padding:15px;" onclick="selectSupplyEmployee('${emp}', this)">${emp}</div>`; 
+            });
+        }
     };
 
     window.addEmployee = () => {
@@ -1105,7 +1172,6 @@
     window.startArchiveEditMode = () => { window.closeSettingsModal(); document.getElementById('search-view').classList.add('edit-mode'); document.getElementById('btnExitEditMode').classList.remove('hidden'); window.switchView('search'); };
     window.exitArchiveEditMode = () => { document.getElementById('search-view').classList.remove('edit-mode'); document.getElementById('btnExitEditMode').classList.add('hidden'); };
 
-    // --- ERWEITERTES SWITCH VIEW (mit Supply) ---
     window.switchView = (v) => {
         if(v !== 'landing') window.requestFullScreen(); if(v !== 'search') window.exitArchiveEditMode();
         document.getElementById('landing-view').classList.add('hidden'); 
@@ -1428,7 +1494,14 @@
                 await fetch(GOOGLE_SCRIPT_URL, { 
                     method: "POST", 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ type: "SETUP_SHEET", pdfBase64: base64PdfData, artNr: art, machine: mach, employee: emp }) 
+                    body: JSON.stringify({ 
+                        type: "SETUP_SHEET", 
+                        pdfBase64: base64PdfData, 
+                        artNr: art, 
+                        machine: mach, 
+                        employee: emp,
+                        recipient: EMAIL_RUESTBLATT // ➔ Nutzt die Einstellung von ganz oben
+                    }) 
                 }); 
             } catch (err) { console.error("Mail Fehler:", err); alert("⚠️ PDF in Datenbank gespeichert, aber E-Mail-Versand fehlgeschlagen (Google Apps Script blockiert?)."); throw err; }
             alert("Erfolgreich in der Datenbank gespeichert und als PDF-Mail versendet!");
@@ -1448,7 +1521,14 @@
             await fetch(GOOGLE_SCRIPT_URL, { 
                 method: "POST", 
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ type: "SETUP_SHEET", pdfBase64: base64PdfData, artNr: art, machine: mach, employee: emp }) 
+                body: JSON.stringify({ 
+                    type: "SETUP_SHEET", 
+                    pdfBase64: base64PdfData, 
+                    artNr: art, 
+                    machine: mach, 
+                    employee: emp,
+                    recipient: EMAIL_RUESTBLATT // ➔ Nutzt die Einstellung von ganz oben
+                }) 
             }); 
             alert("Das Rüstblatt wurde erfolgreich erneut per E-Mail gesendet!");
         } catch(e) { console.error(e); alert("⚠️ Fehler beim Erstellen oder Versenden der Mail!"); }
