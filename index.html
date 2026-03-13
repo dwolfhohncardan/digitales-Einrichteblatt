@@ -446,6 +446,16 @@
                     <label style="font-size: 1.2em; color: var(--primary);">2. Für welche Maschinen?</label>
                     <p style="color: #666; font-size: 0.9em; margin-top: 0;">Mehrfachauswahl durch Antippen möglich.</p>
                     <div id="supplyMachineList" class="wiz-grid-select"></div>
+
+                    <div id="supplySubMenuContainer" class="hidden" style="margin-top: 20px; padding: 15px; background: #eaf2f8; border-radius: 8px; border: 2px dashed var(--sec);">
+                        <label style="font-size: 1.1em; color: var(--primary);">Zusatzbedarf für Grob / Integrex:</label>
+                        <p style="color: #666; font-size: 0.9em; margin-top: 0; margin-bottom: 10px;">Bitte wählen, was genau benötigt wird:</p>
+                        <div class="wiz-grid-select" id="supplySubOptions">
+                            <div class="wiz-option-btn" style="padding: 15px; font-size: 1em;" onclick="this.classList.toggle('selected')">Wellenmitnehmer</div>
+                            <div class="wiz-option-btn" style="padding: 15px; font-size: 1em;" onclick="this.classList.toggle('selected')">Nabenmitnehmer</div>
+                            <div class="wiz-option-btn" style="padding: 15px; font-size: 1em;" onclick="this.classList.toggle('selected')">Dichthülse</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div style="margin-top: 40px; text-align: center; border-top: 2px solid #eee; padding-top: 30px;">
@@ -679,6 +689,7 @@
     // ==========================================
     // EINSTELLUNGEN FÜR DEINE E-MAILS & SERVER
     // ==========================================
+    // DEINE NEUE GOOGLE SCRIPT URL:
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2l5q4xHalhJKmdPBeJ9cRKB_PCisWhcBfAPl1GqxlT470TPHbJmXcpnPRUptkkjzScg/exec";
     
     // ➔ Hier definierst du, wo das Rüstblatt (PDF) landen soll:
@@ -784,6 +795,24 @@
         btnElement.classList.add('selected');
     };
 
+    // --- NEU: ZUSATZBEDARF PRÜFEN ---
+    window.checkSupplySubMenu = () => {
+        const selectedNodes = document.querySelectorAll('#supplyMachineList .wiz-option-btn.selected');
+        const selected = Array.from(selectedNodes).map(btn => btn.innerText);
+        
+        // Prüft, ob eine der definierten Maschinen ausgewählt wurde
+        const needsSubMenu = selected.some(m => ["Integrex 200", "Grob 1", "Grob 2", "Grob 3"].includes(m));
+        
+        const subMenu = document.getElementById('supplySubMenuContainer');
+        if(needsSubMenu) {
+            subMenu.classList.remove('hidden');
+        } else {
+            subMenu.classList.add('hidden');
+            // Auswahlen im Untermenü löschen, wenn es ausgeblendet wird
+            document.querySelectorAll('#supplySubOptions .wiz-option-btn').forEach(b => b.classList.remove('selected'));
+        }
+    };
+
     window.renderSupplyMachines = () => {
         const container = document.getElementById('supplyMachineList');
         container.innerHTML = '';
@@ -799,12 +828,17 @@
             
             btn.onclick = () => {
                 btn.classList.toggle('selected');
+                window.checkSupplySubMenu(); // Ruft die Prüfung für das Zusatzmenü auf
             };
             container.appendChild(btn);
         });
 
         document.getElementById('supply_employee').value = '';
         document.querySelectorAll('#supply_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
+        
+        // Untermenü beim Neuladen verstecken und leeren
+        document.getElementById('supplySubMenuContainer').classList.add('hidden');
+        document.querySelectorAll('#supplySubOptions .wiz-option-btn').forEach(b => b.classList.remove('selected'));
     };
 
     window.sendMaterialRequest = async () => {
@@ -814,6 +848,16 @@
         const selectedNodes = document.querySelectorAll('#supplyMachineList .wiz-option-btn.selected');
         const selected = Array.from(selectedNodes).map(btn => btn.innerText);
         if(selected.length === 0) return alert("Bitte wähle mindestens eine Maschine aus (Schritt 2).");
+
+        // --- NEU: Untermenü Optionen abgreifen und formatieren ---
+        const subOptionNodes = document.querySelectorAll('#supplySubOptions .wiz-option-btn.selected');
+        const selectedSubOptions = Array.from(subOptionNodes).map(btn => btn.innerText);
+        
+        let machinesPayload = [...selected];
+        if (selectedSubOptions.length > 0) {
+            // Hängt den Zusatzbedarf einfach als virtuellen Eintrag mit an die Maschinen an
+            machinesPayload.push("🛠️ Zusatzbedarf: " + selectedSubOptions.join(", "));
+        }
 
         const btn = document.getElementById('btnSendSupply');
         btn.disabled = true;
@@ -825,14 +869,16 @@
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({
                     type: "MATERIAL_REQUEST",
-                    machines: selected,
+                    machines: machinesPayload, // Nutzt jetzt den erweiterten Payload inkl. Zusatzbedarf
                     employee: emp, 
-                    recipient: EMAIL_MATERIAL // ➔ Nutzt die Einstellung von ganz oben
+                    recipient: EMAIL_MATERIAL
                 })
             });
             
             document.getElementById('successModal').classList.remove('hidden');
             selectedNodes.forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('#supplySubOptions .wiz-option-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('supplySubMenuContainer').classList.add('hidden');
             
         } catch (e) {
             alert("⚠️ Fehler beim Senden. Bitte prüfe die Internetverbindung des Tablets.");
