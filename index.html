@@ -37,6 +37,15 @@
         .tile-text { font-size: 1.6em; font-weight: bold; color: var(--primary); }
         .tile-sub { font-size: 1em; color: #7f8c8d; margin-top: 5px; }
 
+        /* --- MATERIALVERSORGUNG --- */
+        .supply-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 20px; }
+        .supply-item { 
+            padding: 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; 
+            display: flex; align-items: center; gap: 15px; transition: 0.2s; background: white;
+        }
+        .supply-item:active { transform: scale(0.98); }
+        .supply-item.selected { border-color: var(--success); background: #e8f8f5; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2); }
+
         /* Formular Styles */
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .grid-tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
@@ -181,7 +190,7 @@
         @media print {
             body { background: white; font-size: 10pt; }
             #hiddenPdfTemplate { display: none !important; }
-            .no-print, .nav-btn, .header button, #search-view, .btn-slot-add, .modal-overlay, .wizard-overlay, #landing-view, .fab-fullscreen { display: none !important; }
+            .no-print, .nav-btn, .header button, #search-view, .btn-slot-add, .modal-overlay, .wizard-overlay, #landing-view, .fab-fullscreen, #supply-view { display: none !important; }
             .card { box-shadow: none; border: 1px solid #999; padding: 10px; margin-bottom: 10px; break-inside: avoid; }
             .grid-tools { grid-template-columns: 1fr 1fr; gap: 10px; }
             .tool-box { border: 1px solid #000; padding: 5px; break-inside: avoid; }
@@ -398,11 +407,33 @@
                 <div class="tile-text">Rüstblatt suchen</div>
                 <div class="tile-sub">Archiv öffnen</div>
             </div>
+            
+            <div class="landing-tile" style="border: 2px solid var(--accent);" onclick="switchView('supply')">
+                <div class="tile-icon">📦</div>
+                <div class="tile-text">Materialversorgung</div>
+                <div class="tile-sub">Material anfordern</div>
+            </div>
+
             <div class="landing-tile" onclick="openSettingsModal()">
                 <div class="tile-icon">⚙️</div>
                 <div class="tile-text">Einstellungen</div>
                 <div class="tile-sub">Logo anpassen & Archiv bearbeiten</div>
             </div>
+        </div>
+
+        <div id="supply-view" class="hidden">
+            <div class="card">
+                <h2 style="color: var(--primary); margin-top: 0; font-size: 1.8em;">Materialversorgung anfordern</h2>
+                <p style="color: #555; font-size: 1.1em;">Bitte wähle die Maschinen aus, für die Material aus dem Lager geholt werden soll:</p>
+                <div id="supplyMachineList" class="supply-grid"></div>
+                
+                <div style="margin-top: 40px; text-align: center; border-top: 2px solid #eee; padding-top: 30px;">
+                    <button id="btnSendSupply" class="btn-action" style="background: var(--accent); max-width: 600px; margin: 0 auto; display: block;" onclick="sendMaterialRequest()">
+                        📧 Materialbestellung an d.wolf@hohn-cardan.de senden
+                    </button>
+                </div>
+            </div>
+            <button class="nav-btn" onclick="switchView('landing')" style="width: 100%; padding: 15px; font-size: 1.2em; margin-top: 10px;">Zurück zur Startseite</button>
         </div>
 
         <div id="create-view" class="hidden">
@@ -618,7 +649,8 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc, getDocs, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNddcw2tVtSwdszm46hDoDnMk-zL1PpioMNQvVT9ql585NPAUYxQ6DjhmTGlq9cpoB1Q/exec";
+    // --- NEUE URL HIER FEST INTEGRIERT ---
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9WnQ7-04qETNiI8lbnfcEwvVj3pzMIJZiccSzcQvPWruZS2vHLJM1aEie8EbUkZjDcw/exec";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDJueI6GEUCSKhHOC8CHZlLmDDNylmohkk",
@@ -707,6 +739,64 @@
             { id: "size", label: "Ausführung / Größe", type: "buttons", options: ["Entfällt", "Br. 114", "Br. 124", "Br. 134", "Br. 144", "Br. 151", "Br. 178", "Br. 183", "Br. 253"], allowCustom: true }
         ]
     };
+
+    // --- MATERIALVERSORGUNG LOGIK ---
+    window.renderSupplyMachines = () => {
+        const container = document.getElementById('supplyMachineList');
+        container.innerHTML = '';
+        const allMachines = [...new Set(Object.values(machineConfig).flat())].sort();
+        
+        allMachines.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'supply-item';
+            div.innerHTML = `<input type="checkbox" value="${m}" style="transform: scale(1.5); margin: 0;"> <span style="font-size: 1.2em; font-weight: bold; color: var(--primary);">${m}</span>`;
+            
+            // Klick auf die ganze Box toggelt die Checkbox
+            div.onclick = (e) => {
+                if(e.target.tagName !== 'INPUT') {
+                    const cb = div.querySelector('input');
+                    cb.checked = !cb.checked;
+                }
+                div.classList.toggle('selected', div.querySelector('input').checked);
+            };
+            container.appendChild(div);
+        });
+    };
+
+    window.sendMaterialRequest = async () => {
+        const selected = Array.from(document.querySelectorAll('#supplyMachineList input:checked')).map(i => i.value);
+        if(selected.length === 0) return alert("Bitte wähle zuerst mindestens eine Maschine aus.");
+
+        const btn = document.getElementById('btnSendSupply');
+        btn.disabled = true;
+        btn.innerText = "Bitte warten, Bestellung wird gesendet...";
+
+        try {
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    type: "MATERIAL_REQUEST",
+                    machines: selected,
+                    recipient: "d.wolf@hohn-cardan.de"
+                })
+            });
+            alert("✅ Materialbestellung wurde erfolgreich an Herrn Wolf versendet!");
+            
+            // Haken wieder entfernen
+            document.querySelectorAll('#supplyMachineList input:checked').forEach(cb => { 
+                cb.checked = false; 
+                cb.parentElement.classList.remove('selected'); 
+            });
+            window.switchView('landing');
+        } catch (e) {
+            alert("⚠️ Fehler beim Senden. Bitte prüfe die Internetverbindung des Tablets.");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = "📧 Materialbestellung an d.wolf@hohn-cardan.de senden";
+        }
+    };
+
 
     // --- BARCODE SCANNER FUNKTIONEN ---
     window.startScanner = () => {
@@ -1015,10 +1105,23 @@
     window.startArchiveEditMode = () => { window.closeSettingsModal(); document.getElementById('search-view').classList.add('edit-mode'); document.getElementById('btnExitEditMode').classList.remove('hidden'); window.switchView('search'); };
     window.exitArchiveEditMode = () => { document.getElementById('search-view').classList.remove('edit-mode'); document.getElementById('btnExitEditMode').classList.add('hidden'); };
 
+    // --- ERWEITERTES SWITCH VIEW (mit Supply) ---
     window.switchView = (v) => {
         if(v !== 'landing') window.requestFullScreen(); if(v !== 'search') window.exitArchiveEditMode();
-        document.getElementById('landing-view').classList.add('hidden'); document.getElementById('create-view').classList.add('hidden'); document.getElementById('search-view').classList.add('hidden'); document.getElementById('detail-view').classList.add('hidden');
-        if(v==='landing') document.getElementById('landing-view').classList.remove('hidden'); else if(v==='create') document.getElementById('create-view').classList.remove('hidden'); else if(v==='search') document.getElementById('search-view').classList.remove('hidden'); else if(v==='detail') document.getElementById('detail-view').classList.remove('hidden');
+        document.getElementById('landing-view').classList.add('hidden'); 
+        document.getElementById('create-view').classList.add('hidden'); 
+        document.getElementById('search-view').classList.add('hidden'); 
+        document.getElementById('detail-view').classList.add('hidden');
+        document.getElementById('supply-view').classList.add('hidden');
+        
+        if(v==='landing') document.getElementById('landing-view').classList.remove('hidden'); 
+        else if(v==='create') document.getElementById('create-view').classList.remove('hidden'); 
+        else if(v==='search') document.getElementById('search-view').classList.remove('hidden'); 
+        else if(v==='detail') document.getElementById('detail-view').classList.remove('hidden');
+        else if(v==='supply') { 
+            document.getElementById('supply-view').classList.remove('hidden'); 
+            window.renderSupplyMachines(); 
+        }
     };
 
     window.closeWizard = () => {
@@ -1301,7 +1404,7 @@
 
     window.processAndSendWithPDF = async () => {
         const art = document.getElementById('artNr').value.trim(); const seq = document.getElementById('sequence').value.trim(); const mach = document.getElementById('machine').value.trim(); const emp = document.getElementById('employee').value.trim();
-        if(!art || !emp) return alert("Artikelnummer und Mitarbeiter fehlen!"); if(GOOGLE_SCRIPT_URL === "DEINE_GOOGLE_SCRIPT_URL_HIER") return alert("BITTE ZUERST DIE GOOGLE SCRIPT URL GANZ OBEN IM CODE EINTRAGEN!");
+        if(!art || !emp) return alert("Artikelnummer und Mitarbeiter fehlen!");
 
         let existingDocId = window.currentDuplicateDocId; let existingPhotoUrl = window.currentDuplicatePhotoUrl;
         if (!existingDocId) {
@@ -1321,7 +1424,13 @@
             const opt = { margin: 0, filename: `Ruestblatt_${art}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, pagebreak: { mode: 'css' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
             let base64PdfData = ""; try { const pdfBase64Url = await html2pdf().set(opt).from(templateEl).outputPdf('datauristring'); base64PdfData = pdfBase64Url.split(',')[1]; } catch (err) { console.error("PDF Fehler:", err); alert("⚠️ Das PDF konnte nicht generiert werden."); throw err; }
             templateEl.style.display = 'none'; mainApp.style.display = 'block';
-            try { await fetch(GOOGLE_SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ pdfBase64: base64PdfData, artNr: art, machine: mach, employee: emp }) }); } catch (err) { console.error("Mail Fehler:", err); alert("⚠️ PDF in Datenbank gespeichert, aber E-Mail-Versand fehlgeschlagen (Google Apps Script blockiert?)."); throw err; }
+            try { 
+                await fetch(GOOGLE_SCRIPT_URL, { 
+                    method: "POST", 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify({ type: "SETUP_SHEET", pdfBase64: base64PdfData, artNr: art, machine: mach, employee: emp }) 
+                }); 
+            } catch (err) { console.error("Mail Fehler:", err); alert("⚠️ PDF in Datenbank gespeichert, aber E-Mail-Versand fehlgeschlagen (Google Apps Script blockiert?)."); throw err; }
             alert("Erfolgreich in der Datenbank gespeichert und als PDF-Mail versendet!");
             document.getElementById('setupForm').reset(); document.getElementById('toolContainer').innerHTML = ''; document.getElementById('clampingContainer').innerHTML = ''; document.getElementById('setupPreview').style.display = 'none'; currentMainPhotoSrc = ""; wizardToolsData = {}; wizardClampingData = []; window.currentDuplicateDocId = null; window.currentDuplicatePhotoUrl = ""; window.currentDetailData = null; window.switchView('landing');
         } catch (error) { console.error("Gesamtprozess gestoppt:", error); } 
@@ -1329,14 +1438,19 @@
     };
 
     window.resendMailFromDetail = async () => {
-        if(GOOGLE_SCRIPT_URL === "DEINE_GOOGLE_SCRIPT_URL_HIER") return alert("URL fehlt!"); const btn = document.getElementById('btnResend'); btn.innerText = "Sende E-Mail..."; btn.disabled = true;
+        const btn = document.getElementById('btnResend'); btn.innerText = "Sende E-Mail..."; btn.disabled = true;
         const art = document.getElementById('det_artNr').innerText; const seq = document.getElementById('det_sequence').innerText; const mach = document.getElementById('det_machine').innerText; const emp = document.getElementById('det_employee').innerText; const photoUrl = document.getElementById('det_setupPreview').src;
         window.populateHiddenPdfTemplate(art, seq, mach, emp, photoUrl && photoUrl !== window.location.href ? photoUrl : null); const templateEl = document.getElementById('hiddenPdfTemplate'); const mainApp = document.getElementById('mainApp');
         mainApp.style.display = 'none'; templateEl.style.display = 'block'; window.scrollTo(0, 0);
         try {
             const opt = { margin: 0, filename: `Ruestblatt_${art}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, pagebreak: { mode: 'css' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
             const pdfBase64Url = await html2pdf().set(opt).from(templateEl).outputPdf('datauristring'); const base64PdfData = pdfBase64Url.split(',')[1];
-            await fetch(GOOGLE_SCRIPT_URL, { method: "POST", headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ pdfBase64: base64PdfData, artNr: art, machine: mach, employee: emp }) }); alert("Das Rüstblatt wurde erfolgreich erneut per E-Mail gesendet!");
+            await fetch(GOOGLE_SCRIPT_URL, { 
+                method: "POST", 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ type: "SETUP_SHEET", pdfBase64: base64PdfData, artNr: art, machine: mach, employee: emp }) 
+            }); 
+            alert("Das Rüstblatt wurde erfolgreich erneut per E-Mail gesendet!");
         } catch(e) { console.error(e); alert("⚠️ Fehler beim Erstellen oder Versenden der Mail!"); }
         templateEl.style.display = 'none'; mainApp.style.display = 'block'; btn.innerText = "Erneut als E-Mail senden"; btn.disabled = false;
     };
