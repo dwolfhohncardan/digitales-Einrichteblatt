@@ -148,8 +148,15 @@
         .btn-action { color: white; border: none; padding: 18px; width: 100%; font-size: 1.2em; font-weight: bold; cursor: pointer; border-radius: 8px; transition: 0.2s; }
         .btn-action:disabled { background: #95a5a6; cursor: not-allowed; }
 
-        /* --- SCHWEBENDER VOLLBILD BUTTON --- */
-        .fab-fullscreen { position: fixed; bottom: 25px; right: 25px; background: rgba(44, 62, 80, 0.85); color: white; border: 2px solid rgba(255,255,255,0.2); border-radius: 50px; padding: 12px 20px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 9999; display: flex; align-items: center; gap: 10px; transition: all 0.2s; backdrop-filter: blur(5px); }
+        /* --- SCHWEBENDER VOLLBILD BUTTON (REDUZIERT) --- */
+        .fab-fullscreen { 
+            position: fixed; bottom: 25px; right: 25px; background: rgba(44, 62, 80, 0.85); 
+            color: white; border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; 
+            width: 55px; height: 55px; font-size: 1.5em; cursor: pointer; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 9999; 
+            display: flex; align-items: center; justify-content: center; 
+            transition: all 0.2s; backdrop-filter: blur(5px); 
+        }
         .fab-fullscreen:active { transform: scale(0.92); }
         .fab-fullscreen:hover { background: var(--primary); }
 
@@ -428,7 +435,7 @@
             <div class="landing-tile" onclick="openSettingsModal()">
                 <div class="tile-icon">⚙️</div>
                 <div class="tile-text">Einstellungen</div>
-                <div class="tile-sub">Logo, Mitarbeiter & Archiv</div>
+                <div class="tile-sub">Logo, Mails & Archiv</div>
             </div>
         </div>
 
@@ -447,14 +454,14 @@
                     <p style="color: #666; font-size: 0.9em; margin-top: 0;">Mehrfachauswahl durch Antippen möglich.</p>
                     <div id="supplyMachineList" class="wiz-grid-select"></div>
 
-                    <div id="supplySubMenuContainer" class="hidden" style="margin-top: 20px; padding: 15px; background: #eaf2f8; border-radius: 8px; border: 2px dashed var(--sec);">
-                        <label style="font-size: 1.1em; color: var(--primary);">Zusatzbedarf für Grob / Integrex:</label>
-                        <p style="color: #666; font-size: 0.9em; margin-top: 0; margin-bottom: 10px;">Bitte wählen, was genau benötigt wird:</p>
-                        <div class="wiz-grid-select" id="supplySubOptions">
-                            <div class="wiz-option-btn" style="padding: 15px; font-size: 1em;" onclick="this.classList.toggle('selected')">Wellenmitnehmer</div>
-                            <div class="wiz-option-btn" style="padding: 15px; font-size: 1em;" onclick="this.classList.toggle('selected')">Nabenmitnehmer</div>
-                            <div class="wiz-option-btn" style="padding: 15px; font-size: 1em;" onclick="this.classList.toggle('selected')">Dichthülse</div>
+                    <div id="supplySubMenuContainer" class="hidden" style="margin-top: 25px; padding: 20px; background: #eaf2f8; border-radius: 8px; border: 2px dashed var(--sec);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <label id="supplySubMenuLabel" style="font-size: 1.2em; font-weight: bold; color: var(--primary);">Zusatzbedarf:</label>
+                            <button class="nav-btn" style="padding: 6px 15px; font-size: 0.9em; background: var(--primary);" onclick="closeSupplySubMenu()">OK</button>
                         </div>
+                        <p style="color: #666; font-size: 0.9em; margin-top: 0; margin-bottom: 15px;">Bitte wählen, what für diese Maschine benötigt wird:</p>
+                        <div class="wiz-grid-select" id="supplySubOptions">
+                            </div>
                     </div>
                 </div>
                 
@@ -601,6 +608,20 @@
             </div>
 
             <div class="form-group" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #eee;">
+                <label>E-Mail Empfänger festlegen</label>
+                <p style="color:#666; font-size:0.9em; margin-top:0;">Hier kannst du die Empfänger hinterlegen. Mehrere Adressen einfach mit Komma trennen.</p>
+                
+                <label style="font-size: 0.9em; margin-top: 10px; color: var(--primary); font-weight: bold;">Empfänger für Rüstblätter (PDF):</label>
+                <input type="text" id="setting_email_ruestblatt" class="wizard-input" placeholder="z.B. ruestblatt@firma.de" style="margin-bottom: 10px;">
+                
+                <label style="font-size: 0.9em; margin-top: 10px; color: var(--primary); font-weight: bold;">Empfänger für Materialanforderung:</label>
+                <input type="text" id="setting_email_material" class="wizard-input" placeholder="z.B. logistik@firma.de">
+                
+                <button type="button" class="btn-action" style="background: var(--sec); padding: 12px; font-size: 1em; margin-top: 15px;" onclick="saveEmails()">E-Mails in Datenbank speichern</button>
+                <p id="email_save_status" style="color:var(--success); font-weight:bold; display:none; margin-top:10px;">Erfolgreich gespeichert!</p>
+            </div>
+
+            <div class="form-group" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #eee;">
                 <label>Mitarbeiterverwaltung</label>
                 <p style="color:#666; font-size:0.9em; margin-top:0;">Mitarbeiter für Rüstblatt und Materialanforderung verwalten.</p>
                 <div class="wiz-grid-select" id="settings_employee_grid"></div>
@@ -679,24 +700,19 @@
     </div>
 
     <button onclick="toggleFullScreen()" class="fab-fullscreen no-print" title="Vollbild umschalten">
-        <span id="fsIcon" style="font-size: 1.3em;">⛶</span> 
-        <span id="fsText">Vollbild</span>
+        <span id="fsIcon" style="font-size: 1.2em;">⛶</span> 
     </button>
 </div> <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, setDoc, getDocs, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     // ==========================================
-    // EINSTELLUNGEN FÜR DEINE E-MAILS & SERVER
+    // EINSTELLUNGEN FÜR SERVER
     // ==========================================
-    // DEINE NEUE GOOGLE SCRIPT URL:
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2l5q4xHalhJKmdPBeJ9cRKB_PCisWhcBfAPl1GqxlT470TPHbJmXcpnPRUptkkjzScg/exec";
     
-    // ➔ Hier definierst du, wo das Rüstblatt (PDF) landen soll:
-    const EMAIL_RUESTBLATT = "d.wolf@hohn-cardan.de";
-    
-    // ➔ Hier definierst du, wer alles die Materialanforderung bekommen soll (mehrere mit Komma trennen):
-    const EMAIL_MATERIAL = "d.wolf@hohn-cardan.de, a.kvitko@hohn-cardan.de";
+    window.currentEmailRuestblatt = "d.wolf@hohn-cardan.de"; 
+    window.currentEmailMaterial = "d.wolf@hohn-cardan.de, e.oks@hohn-cardan.de"; 
     // ==========================================
 
     const firebaseConfig = {
@@ -725,14 +741,16 @@
     let wizardToolsData = {}; 
     let wizardClampingData = []; 
     
-    // Scanner Instanz
     let html5QrCode = null;
-    
     window.currentDuplicateDocId = null;
     window.currentDuplicatePhotoUrl = null;
     window.currentHallenplanBase64 = null;
 
-    // --- CONFIG & DATA ---
+    window.supplySubSelections = {};
+    window.activeSupplyMachine = null;
+    window.SPECIAL_MACHINES = ["Integrex 200", "Grob 1", "Grob 2", "Grob 3"];
+    window.SUB_OPTIONS = ["Wellenmitnehmer", "Nabenmitnehmer", "Dichthülse"];
+
     const machineConfig = {
         "Drehen": ["Pronto Rob. 1", "Pronto 1", "Pronto 3", "Pronto 4", "Pronto 5", "Smart", "Nexus", "Padovani", "Integrex 200"],
         "Bohren": ["Doosan Rob. 1", "Doosan 3", "DMC 60 (H)", "Ergo 260 CL", "Doosan-2011"],
@@ -787,35 +805,17 @@
         ]
     };
 
-    // --- MATERIALVERSORGUNG LOGIK ---
-    
     window.selectSupplyEmployee = (emp, btnElement) => {
         document.getElementById('supply_employee').value = emp;
         document.querySelectorAll('#supply_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
         btnElement.classList.add('selected');
     };
 
-    // --- NEU: ZUSATZBEDARF PRÜFEN ---
-    window.checkSupplySubMenu = () => {
-        const selectedNodes = document.querySelectorAll('#supplyMachineList .wiz-option-btn.selected');
-        const selected = Array.from(selectedNodes).map(btn => btn.innerText);
-        
-        // Prüft, ob eine der definierten Maschinen ausgewählt wurde
-        const needsSubMenu = selected.some(m => ["Integrex 200", "Grob 1", "Grob 2", "Grob 3"].includes(m));
-        
-        const subMenu = document.getElementById('supplySubMenuContainer');
-        if(needsSubMenu) {
-            subMenu.classList.remove('hidden');
-        } else {
-            subMenu.classList.add('hidden');
-            // Auswahlen im Untermenü löschen, wenn es ausgeblendet wird
-            document.querySelectorAll('#supplySubOptions .wiz-option-btn').forEach(b => b.classList.remove('selected'));
-        }
-    };
-
     window.renderSupplyMachines = () => {
         const container = document.getElementById('supplyMachineList');
         container.innerHTML = '';
+        window.supplySubSelections = {}; 
+        window.closeSupplySubMenu();     
         
         const allMachines = [...new Set(Object.values(machineConfig).flat())].sort();
         allMachines.push("Zentrieranlage");
@@ -827,18 +827,67 @@
             btn.innerText = m;
             
             btn.onclick = () => {
-                btn.classList.toggle('selected');
-                window.checkSupplySubMenu(); // Ruft die Prüfung für das Zusatzmenü auf
+                const isSelected = btn.classList.toggle('selected');
+                
+                if (window.SPECIAL_MACHINES.includes(m)) {
+                    if (isSelected) {
+                        if (!window.supplySubSelections[m]) window.supplySubSelections[m] = [];
+                        window.openSupplySubMenu(m);
+                    } else {
+                        delete window.supplySubSelections[m];
+                        if (window.activeSupplyMachine === m) {
+                            window.closeSupplySubMenu();
+                        }
+                    }
+                } else {
+                    window.closeSupplySubMenu();
+                }
             };
             container.appendChild(btn);
         });
 
         document.getElementById('supply_employee').value = '';
         document.querySelectorAll('#supply_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
+    };
+
+    window.openSupplySubMenu = (machineName) => {
+        window.activeSupplyMachine = machineName;
+        document.getElementById('supplySubMenuLabel').innerText = `Zusatzbedarf für ${machineName}:`;
         
-        // Untermenü beim Neuladen verstecken und leeren
+        const optsContainer = document.getElementById('supplySubOptions');
+        optsContainer.innerHTML = ''; 
+        
+        window.SUB_OPTIONS.forEach(opt => {
+            const optBtn = document.createElement('div');
+            optBtn.className = 'wiz-option-btn';
+            optBtn.style.padding = '15px';
+            optBtn.style.fontSize = '1em';
+            optBtn.innerText = opt;
+            
+            if (window.supplySubSelections[machineName] && window.supplySubSelections[machineName].includes(opt)) {
+                optBtn.classList.add('selected');
+            }
+            
+            optBtn.onclick = () => {
+                const isOptSelected = optBtn.classList.toggle('selected');
+                if (isOptSelected) {
+                    if (!window.supplySubSelections[machineName].includes(opt)) {
+                        window.supplySubSelections[machineName].push(opt);
+                    }
+                } else {
+                    window.supplySubSelections[machineName] = window.supplySubSelections[machineName].filter(item => item !== opt);
+                }
+            };
+            
+            optsContainer.appendChild(optBtn);
+        });
+        
+        document.getElementById('supplySubMenuContainer').classList.remove('hidden');
+    };
+
+    window.closeSupplySubMenu = () => {
+        window.activeSupplyMachine = null;
         document.getElementById('supplySubMenuContainer').classList.add('hidden');
-        document.querySelectorAll('#supplySubOptions .wiz-option-btn').forEach(b => b.classList.remove('selected'));
     };
 
     window.sendMaterialRequest = async () => {
@@ -849,15 +898,12 @@
         const selected = Array.from(selectedNodes).map(btn => btn.innerText);
         if(selected.length === 0) return alert("Bitte wähle mindestens eine Maschine aus (Schritt 2).");
 
-        // --- NEU: Untermenü Optionen abgreifen und formatieren ---
-        const subOptionNodes = document.querySelectorAll('#supplySubOptions .wiz-option-btn.selected');
-        const selectedSubOptions = Array.from(subOptionNodes).map(btn => btn.innerText);
-        
-        let machinesPayload = [...selected];
-        if (selectedSubOptions.length > 0) {
-            // Hängt den Zusatzbedarf einfach als virtuellen Eintrag mit an die Maschinen an
-            machinesPayload.push("🛠️ Zusatzbedarf: " + selectedSubOptions.join(", "));
-        }
+        let machinesPayload = selected.map(m => {
+            if (window.supplySubSelections[m] && window.supplySubSelections[m].length > 0) {
+                return `${m} (+ ${window.supplySubSelections[m].join(", ")})`;
+            }
+            return m; 
+        });
 
         const btn = document.getElementById('btnSendSupply');
         btn.disabled = true;
@@ -869,16 +915,16 @@
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({
                     type: "MATERIAL_REQUEST",
-                    machines: machinesPayload, // Nutzt jetzt den erweiterten Payload inkl. Zusatzbedarf
+                    machines: machinesPayload,
                     employee: emp, 
-                    recipient: EMAIL_MATERIAL
+                    recipient: window.currentEmailMaterial 
                 })
             });
             
             document.getElementById('successModal').classList.remove('hidden');
             selectedNodes.forEach(btn => btn.classList.remove('selected'));
-            document.querySelectorAll('#supplySubOptions .wiz-option-btn').forEach(b => b.classList.remove('selected'));
-            document.getElementById('supplySubMenuContainer').classList.add('hidden');
+            window.closeSupplySubMenu();
+            window.supplySubSelections = {};
             
         } catch (e) {
             alert("⚠️ Fehler beim Senden. Bitte prüfe die Internetverbindung des Tablets.");
@@ -893,17 +939,12 @@
         window.switchView('landing');
     };
 
-
-    // --- BARCODE SCANNER FUNKTIONEN ---
     window.startScanner = () => {
         document.getElementById('scannerContainer').classList.remove('hidden');
-        
         if (!html5QrCode) {
             html5QrCode = new Html5Qrcode("reader");
         }
-        
         const config = { fps: 10, qrbox: { width: 300, height: 100 } };
-        
         html5QrCode.start(
             { facingMode: "environment" }, 
             config,
@@ -914,7 +955,7 @@
             (errorMessage) => { }
         ).catch((err) => {
             console.error("Scanner Start Fehler:", err);
-            alert("Kamera konnte nicht gestartet werden. Bitte erlaube den Zugriff auf die Kamera.");
+            alert("Kamera konnte nicht gestartet werden.");
             window.stopScanner();
         });
     };
@@ -931,15 +972,12 @@
         }
     };
 
-
-    // --- SORTIERFUNKTION TABELLE ---
     window.sortTable = (n) => {
         const table = document.getElementById("dataTable");
         let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
         switching = true;
         dir = window.sortDirections[n] ? "asc" : "desc"; 
         window.sortDirections[n] = !window.sortDirections[n]; 
-
         while (switching) {
             switching = false;
             rows = table.rows;
@@ -947,10 +985,8 @@
                 shouldSwitch = false;
                 x = rows[i].getElementsByTagName("TD")[n];
                 y = rows[i + 1].getElementsByTagName("TD")[n];
-                
                 let cmpX = x.innerHTML.toLowerCase();
                 let cmpY = y.innerHTML.toLowerCase();
-
                 if (n === 0) {
                     const partsX = cmpX.split('.');
                     const partsY = cmpY.split('.');
@@ -959,7 +995,6 @@
                         cmpY = partsY[2] + partsY[1] + partsY[0];
                     }
                 }
-
                 if (dir === "asc") {
                     if (cmpX > cmpY) { shouldSwitch = true; break; }
                 } else if (dir === "desc") {
@@ -974,11 +1009,9 @@
         }
     };
 
-    // --- LIGHTBOX FUNKTIONEN ---
     window.openLightbox = (src) => { if(!src || src === "") return; document.getElementById('lightboxImg').src = src; document.getElementById('imageLightbox').classList.remove('hidden'); };
     window.closeLightbox = () => { document.getElementById('imageLightbox').classList.add('hidden'); };
 
-    // --- RANGE SLIDER LOGIC ---
     window.syncMultiRange = (idPrefix) => {
         let minVal = parseInt(document.getElementById(idPrefix + '_min').value) || 0;
         let maxVal = parseInt(document.getElementById(idPrefix + '_max').value) || 0;
@@ -1005,11 +1038,9 @@
         highlight.style.left = leftPercent + "%"; highlight.style.right = rightPercent + "%";
     };
 
-    // --- HALLENPLAN ANZEIGE ---
-    window.showHallenplan = () => { if(window.currentHallenplanBase64) { document.getElementById('hallenplanModal').classList.remove('hidden'); } else { alert("Es wurde noch kein Hallenplan hochgeladen."); } };
+    window.showHallenplan = () => { if(window.currentHallenplanBase64) { document.getElementById('hallenplanModal').classList.remove('hidden'); } else { alert("Kein Plan hochgeladen."); } };
     window.closeHallenplan = () => { document.getElementById('hallenplanModal').classList.add('hidden'); };
 
-    // --- BILD KOMPRIMIERUNG ---
     window.compressLogo = (file, callback) => {
         const reader = new FileReader(); reader.readAsDataURL(file);
         reader.onload = event => {
@@ -1041,16 +1072,15 @@
         }
     };
 
-    // --- SETTINGS ---
     window.openSettingsModal = () => {
-        const pwd = prompt("Bitte Passwort eingeben, um die Einstellungen zu öffnen:");
+        const pwd = prompt("Passwort:");
         if (pwd === "Gelenkwelle") {
-            document.getElementById('logoUploadInput').value = ""; document.getElementById('logo_upload_status').style.display = "none";
-            document.getElementById('hallenplanUploadInput').value = ""; document.getElementById('hallenplan_upload_status').style.display = "none";
+            document.getElementById('logoUploadInput').value = "";
+            document.getElementById('setting_email_ruestblatt').value = window.currentEmailRuestblatt;
+            document.getElementById('setting_email_material').value = window.currentEmailMaterial;
             document.getElementById('settingsModal').classList.remove('hidden');
-        } else if (pwd !== null) { alert("Falsches Passwort!"); }
+        } else if (pwd !== null) { alert("Falsch!"); }
     }
-    
     window.closeSettingsModal = () => document.getElementById('settingsModal').classList.add('hidden');
 
     function initCompanySync() {
@@ -1059,218 +1089,213 @@
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 if (data.logoBase64) {
-                    document.getElementById('pdfCompanyLogo').src = data.logoBase64; document.getElementById('settingsLogoPreview').src = data.logoBase64; document.getElementById('settingsLogoPreview').style.display = 'block';
-                } else { document.getElementById('settingsLogoPreview').style.display = 'none'; }
+                    document.getElementById('pdfCompanyLogo').src = data.logoBase64; 
+                    document.getElementById('settingsLogoPreview').src = data.logoBase64; 
+                    document.getElementById('settingsLogoPreview').style.display = 'block';
+                }
                 if (data.hallenplanBase64) {
-                    window.currentHallenplanBase64 = data.hallenplanBase64; document.getElementById('settingsHallenplanPreview').src = data.hallenplanBase64; document.getElementById('settingsHallenplanPreview').style.display = 'block';
-                    document.getElementById('hallenplanImageModal').src = data.hallenplanBase64; document.getElementById('btnShowHallenplan').style.display = 'inline-block';
-                } else {
-                    window.currentHallenplanBase64 = null; document.getElementById('settingsHallenplanPreview').style.display = 'none'; document.getElementById('btnShowHallenplan').style.display = 'none';
+                    window.currentHallenplanBase64 = data.hallenplanBase64; 
+                    document.getElementById('settingsHallenplanPreview').src = data.hallenplanBase64; 
+                    document.getElementById('settingsHallenplanPreview').style.display = 'block';
+                    document.getElementById('hallenplanImageModal').src = data.hallenplanBase64; 
+                    document.getElementById('btnShowHallenplan').style.display = 'inline-block';
                 }
             }
         });
     }
 
+    function initEmailSync() {
+        const emailDocRef = doc(db, "config", "emails");
+        onSnapshot(emailDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                window.currentEmailRuestblatt = data.ruestblatt || "d.wolf@hohn-cardan.de";
+                window.currentEmailMaterial = data.material || "d.wolf@hohn-cardan.de, e.oks@hohn-cardan.de";
+                if (document.getElementById('setting_email_ruestblatt')) document.getElementById('setting_email_ruestblatt').value = window.currentEmailRuestblatt;
+                if (document.getElementById('setting_email_material')) document.getElementById('setting_email_material').value = window.currentEmailMaterial;
+            }
+        });
+    }
+
+    window.saveEmails = async () => {
+        const rb = document.getElementById('setting_email_ruestblatt').value.trim();
+        const mat = document.getElementById('setting_email_material').value.trim();
+        try {
+            await setDoc(doc(db, "config", "emails"), { ruestblatt: rb, material: mat }, { merge: true });
+            document.getElementById('email_save_status').style.display = 'block';
+            setTimeout(() => { document.getElementById('email_save_status').style.display = 'none'; }, 3000);
+        } catch (e) { alert("Fehler!"); }
+    };
+
     window.handleLogoUpload = async (inp) => {
         if(!inp.files[0]) return;
-        const status = document.getElementById('logo_upload_status'); status.style.display = 'block'; status.innerText = "Verarbeite Logo..."; status.style.color = "var(--sec)";
         window.compressLogo(inp.files[0], async (base64Data) => {
-            try { status.innerText = "Speichere..."; await setDoc(doc(db, "config", "company"), { logoBase64: base64Data }, { merge: true }); status.innerText = "Gespeichert!"; status.style.color = "var(--success)"; setTimeout(() => { status.style.display = 'none'; }, 3000); } catch(e) { status.innerText = "Fehler!"; status.style.color = "red"; }
+            await setDoc(doc(db, "config", "company"), { logoBase64: base64Data }, { merge: true });
         });
     };
 
     window.handleHallenplanUpload = async (inp) => {
         if(!inp.files[0]) return;
-        const status = document.getElementById('hallenplan_upload_status'); status.style.display = 'block'; status.innerText = "Verarbeite Plan..."; status.style.color = "var(--sec)";
         window.compressImage(inp.files[0], async (base64Data) => {
-            try { status.innerText = "Speichere..."; await setDoc(doc(db, "config", "company"), { hallenplanBase64: base64Data }, { merge: true }); status.innerText = "Gespeichert!"; status.style.color = "var(--success)"; setTimeout(() => { status.style.display = 'none'; }, 3000); } catch(e) { status.innerText = "Fehler!"; status.style.color = "red"; }
+            await setDoc(doc(db, "config", "company"), { hallenplanBase64: base64Data }, { merge: true });
         }, 1200); 
     };
 
-    // --- DATENBANK FÜR REIBAHLEN ---
     function initReibahlenSync() {
         const reibDocRef = doc(db, "config", "reibahlen");
         onSnapshot(reibDocRef, (docSnap) => {
-            if (docSnap.exists()) { window.reibahlenList = docSnap.data().list || []; } else { window.reibahlenList = [{ val: "Reibahle beschichtet Ø30mm", desc: "Art.-Nr. 40 577 30000" }, { val: "Reibahle unbeschichtet Ø30mm", desc: "Art.-Nr. 40 544 30000" }]; setDoc(reibDocRef, { list: window.reibahlenList }); }
-            if(!document.getElementById('toolModal').classList.contains('hidden') && document.getElementById('modalToolType').value === 'Reibahle') { window.renderToolFields(); }
+            if (docSnap.exists()) { window.reibahlenList = docSnap.data().list || []; }
         });
     }
 
     window.addNewReibahle = () => {
         const bez = document.getElementById('new_r_bez').value.trim(); const art = document.getElementById('new_r_art').value.trim();
-        if(!bez || !art) return alert("Bitte Bezeichnung und Artikelnummer eingeben!");
+        if(!bez || !art) return;
         window.reibahlenList.push({ val: bez, desc: art }); setDoc(doc(db, "config", "reibahlen"), { list: window.reibahlenList });
     };
 
     window.deleteReibahle = (idx, event) => {
         if (event) event.stopPropagation();
-        const pwd = prompt("Passwort eingeben, um diese Reibahle dauerhaft zu löschen:");
-        if (pwd === "Gelenkwelle") { window.reibahlenList.splice(idx, 1); setDoc(doc(db, "config", "reibahlen"), { list: window.reibahlenList }); } else if (pwd !== null) { alert("Falsches Passwort!"); }
+        if (confirm("Löschen?")) { window.reibahlenList.splice(idx, 1); setDoc(doc(db, "config", "reibahlen"), { list: window.reibahlenList }); }
     };
 
-    // --- DATENBANK FÜR WENDEPLATTEN ---
     function initWendeplattenSync() {
         const wpDocRef = doc(db, "config", "wendeplatten");
         onSnapshot(wpDocRef, (docSnap) => {
-            if (docSnap.exists()) { window.wendeplattenList = docSnap.data().list || []; } else { 
-                window.wendeplattenList = [ { val: "DCMT11T308-MP MC6025", desc: "Schruppplatte-Innen R0,8" }, { val: "DCMT11T304 UE6020", desc: "Schlichtplatte-Innen R0,4 gelb hell" } ]; 
-                setDoc(wpDocRef, { list: window.wendeplattenList }); 
-            }
-            if(!document.getElementById('toolModal').classList.contains('hidden') && document.getElementById('modalToolType').value === 'Drehmeißel') { window.renderToolFields(); }
+            if (docSnap.exists()) { window.wendeplattenList = docSnap.data().list || []; }
         });
     }
 
     window.addNewWendeplatte = () => {
         const iso = document.getElementById('new_w_iso').value.trim(); const desc = document.getElementById('new_w_desc').value.trim();
-        if(!iso) return alert("Bitte mindestens den ISO-Code der Platte eingeben!");
+        if(!iso) return;
         window.wendeplattenList.push({ val: iso, desc: desc }); setDoc(doc(db, "config", "wendeplatten"), { list: window.wendeplattenList });
     };
 
     window.deleteWendeplatte = (idx, event) => {
         if (event) event.stopPropagation();
-        const pwd = prompt("Passwort eingeben, um diese Wendeplatte dauerhaft zu löschen:");
-        if (pwd === "Gelenkwelle") { window.wendeplattenList.splice(idx, 1); setDoc(doc(db, "config", "wendeplatten"), { list: window.wendeplattenList }); } else if (pwd !== null) { alert("Falsches Passwort!"); }
+        if (confirm("Löschen?")) { window.wendeplattenList.splice(idx, 1); setDoc(doc(db, "config", "wendeplatten"), { list: window.wendeplattenList }); }
     };
 
-    // --- MITARBEITER VERWALTUNG (Zentralisiert) ---
     function initEmployeeSync() {
         const empDocRef = doc(db, "config", "employees");
         onSnapshot(empDocRef, (docSnap) => {
-            if (docSnap.exists()) { window.employeeList = docSnap.data().list || []; } else { window.employeeList = ["Lange", "Oks", "Saric"]; setDoc(empDocRef, { list: window.employeeList }); }
+            if (docSnap.exists()) { window.employeeList = docSnap.data().list || []; }
             window.renderEmployeeLists();
         });
     }
 
     window.renderEmployeeLists = () => {
-        const sGrid = document.getElementById('settings_employee_grid');
-        if(sGrid) {
-            sGrid.innerHTML = '';
-            window.employeeList.forEach(emp => { 
-                sGrid.innerHTML += `<div style="position: relative;"><div class="wiz-option-btn" style="padding:15px; cursor:default;">${emp}</div><div class="btn-delete-badge" onclick="deleteEmployee('${emp}', event)" title="Mitarbeiter löschen">✖</div></div>`; 
+        const grids = ['settings_employee_grid', 'wiz_employee_grid', 'supply_employee_grid'];
+        grids.forEach(id => {
+            const g = document.getElementById(id); if(!g) return; g.innerHTML = '';
+            window.employeeList.forEach(emp => {
+                const btn = document.createElement('div'); btn.className = 'wiz-option-btn'; btn.innerText = emp;
+                if(id === 'settings_employee_grid') {
+                    const wrapper = document.createElement('div'); wrapper.style.position = 'relative';
+                    btn.style.cursor = 'default'; wrapper.appendChild(btn);
+                    wrapper.innerHTML += `<div class="btn-delete-badge" onclick="deleteEmployee('${emp}', event)">✖</div>`;
+                    g.appendChild(wrapper);
+                } else if(id === 'wiz_employee_grid') {
+                    btn.onclick = () => selectWizEmployee(emp, btn); g.appendChild(btn);
+                } else {
+                    btn.onclick = () => selectSupplyEmployee(emp, btn); g.appendChild(btn);
+                }
             });
-            sGrid.innerHTML += `<div class="wiz-option-btn" style="background:#eaf2f8; color:var(--sec); border-style: dashed; padding:15px;" onclick="addEmployee()"><span style="font-size:1.5em; margin-right:8px;">+</span> Neu</div>`;
-        }
-
-        const wGrid = document.getElementById('wiz_employee_grid');
-        if(wGrid) {
-            wGrid.innerHTML = '';
-            window.employeeList.forEach(emp => { 
-                wGrid.innerHTML += `<div class="wiz-option-btn" onclick="selectWizEmployee('${emp}', this)">${emp}</div>`; 
-            });
-        }
-
-        const supGrid = document.getElementById('supply_employee_grid');
-        if(supGrid) {
-            supGrid.innerHTML = '';
-            window.employeeList.forEach(emp => { 
-                supGrid.innerHTML += `<div class="wiz-option-btn" style="padding:15px;" onclick="selectSupplyEmployee('${emp}', this)">${emp}</div>`; 
-            });
-        }
+            if(id === 'settings_employee_grid') {
+                g.innerHTML += `<div class="wiz-option-btn" style="border-style:dashed;" onclick="addEmployee()">+ Neu</div>`;
+            }
+        });
     };
 
     window.addEmployee = () => {
-        const name = prompt("Name des neuen Mitarbeiters:");
-        if (name && name.trim() !== "") { const cleanName = name.trim(); if(!window.employeeList.includes(cleanName)) { window.employeeList.push(cleanName); setDoc(doc(db, "config", "employees"), { list: window.employeeList }); } }
+        const name = prompt("Name:");
+        if (name) { window.employeeList.push(name.trim()); setDoc(doc(db, "config", "employees"), { list: window.employeeList }); }
     };
 
     window.deleteEmployee = (name, event) => {
         if (event) event.stopPropagation(); 
-        const pwd = prompt(`Passwort eingeben, um '${name}' dauerhaft zu löschen:`);
-        if (pwd === "Gelenkwelle") { window.employeeList = window.employeeList.filter(e => e !== name); setDoc(doc(db, "config", "employees"), { list: window.employeeList }); } else if (pwd !== null) { alert("Falsches Passwort!"); }
+        if (confirm("Löschen?")) { window.employeeList = window.employeeList.filter(e => e !== name); setDoc(doc(db, "config", "employees"), { list: window.employeeList }); }
     };
 
     window.selectWizEmployee = (emp, btnElement) => {
-        document.getElementById('wiz_employee').value = emp; document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected')); btnElement.classList.add('selected'); setTimeout(() => window.nextStep(5), 200);
+        document.getElementById('wiz_employee').value = emp; 
+        document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected')); 
+        btnElement.classList.add('selected'); setTimeout(() => window.nextStep(5), 200);
     };
 
     window.requestFullScreen = () => {
-        const doc = window.document; const docEl = doc.documentElement; const requestFS = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
-        if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) { if(requestFS) requestFS.call(docEl).catch(err => console.log(err)); }
+        const docEl = document.documentElement;
+        const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullScreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+            if (requestFS) requestFS.call(docEl).catch(err => console.log("FS Blocked"));
+        }
     };
 
     window.toggleFullScreen = () => {
-        const doc = window.document; const docEl = doc.documentElement; const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullScreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen; const cancelFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
-        if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullscreenElement) { if (requestFS) requestFS.call(docEl).catch(err => console.log(err)); } else { if (cancelFS) cancelFS.call(doc).catch(err => console.log(err)); }
+        const doc = window.document;
+        const cancelFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+        if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullscreenElement) {
+            window.requestFullScreen();
+        } else {
+            if (cancelFS) cancelFS.call(doc);
+        }
     };
-
-    const updateFsButtonUI = () => {
-        const doc = window.document; const isFs = (doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
-        document.getElementById('fsIcon').innerText = isFs ? "✖" : "⛶"; document.getElementById('fsText').innerText = isFs ? "Beenden" : "Vollbild";
-    };
-    document.addEventListener("fullscreenchange", updateFsButtonUI); document.addEventListener("webkitfullscreenchange", updateFsButtonUI);
 
     window.startWizard = () => {
         window.requestFullScreen(); 
         ['wiz_artNr', 'wiz_sequence', 'wiz_machine', 'wiz_employee'].forEach(id => document.getElementById(id).value = "");
         document.getElementById('wiz_machine_grid').innerHTML = ""; 
-        document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.remove('selected'));
-        document.querySelectorAll('#wiz_employee_grid .wiz-option-btn').forEach(b => b.classList.remove('selected'));
-
+        document.querySelectorAll('.wiz-option-btn').forEach(b => b.classList.remove('selected'));
         window.currentWizClampingType = null;
-        document.getElementById('btnWizSpannbacken').classList.remove('selected'); document.getElementById('btnWizSpanndorn').classList.remove('selected');
-        document.getElementById('wiz_clamping_fields').style.display = 'none'; document.getElementById('wiz_clamping_fields').innerHTML = ''; document.getElementById('wiz_zentrierung_fields').innerHTML = '';
-
-        wizardToolsData = {}; wizardClampingData = []; currentMainPhotoSrc = ""; window.currentDuplicateDocId = null; window.currentDuplicatePhotoUrl = null;
-        
-        window.renderWizardToolGrid(); window.showStep(1); document.getElementById('wizardOverlay').classList.remove('hidden');
+        document.getElementById('wiz_clamping_fields').style.display = 'none'; 
+        wizardToolsData = {}; wizardClampingData = []; currentMainPhotoSrc = "";
+        window.renderWizardToolGrid(); window.showStep(1); 
+        document.getElementById('wizardOverlay').classList.remove('hidden');
     };
 
     window.startArchiveEditMode = () => { window.closeSettingsModal(); document.getElementById('search-view').classList.add('edit-mode'); document.getElementById('btnExitEditMode').classList.remove('hidden'); window.switchView('search'); };
     window.exitArchiveEditMode = () => { document.getElementById('search-view').classList.remove('edit-mode'); document.getElementById('btnExitEditMode').classList.add('hidden'); };
 
     window.switchView = (v) => {
-        if(v !== 'landing') window.requestFullScreen(); if(v !== 'search') window.exitArchiveEditMode();
-        document.getElementById('landing-view').classList.add('hidden'); 
-        document.getElementById('create-view').classList.add('hidden'); 
-        document.getElementById('search-view').classList.add('hidden'); 
-        document.getElementById('detail-view').classList.add('hidden');
-        document.getElementById('supply-view').classList.add('hidden');
-        
-        if(v==='landing') document.getElementById('landing-view').classList.remove('hidden'); 
-        else if(v==='create') document.getElementById('create-view').classList.remove('hidden'); 
-        else if(v==='search') document.getElementById('search-view').classList.remove('hidden'); 
-        else if(v==='detail') document.getElementById('detail-view').classList.remove('hidden');
-        else if(v==='supply') { 
-            document.getElementById('supply-view').classList.remove('hidden'); 
-            window.renderSupplyMachines(); 
-        }
+        window.requestFullScreen();
+        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+        const target = document.getElementById(v + '-view');
+        if(target) target.classList.remove('hidden');
+        if(v==='supply') window.renderSupplyMachines();
     };
 
     window.closeWizard = () => {
-        if (typeof window.stopScanner === 'function') window.stopScanner(); 
+        window.stopScanner();
         document.getElementById('wizardOverlay').classList.add('hidden');
     };
 
     window.showStep = (n) => { document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active')); document.getElementById('step' + n).classList.add('active'); };
 
     window.nextStep = (target) => {
-        if(target===2 && !document.getElementById('wiz_artNr').value.trim()) return alert("Artikelnummer fehlt");
-        if(target===3 && !document.getElementById('wiz_sequence').value) return alert("Arbeitsfolge fehlt");
-        if(target===4 && !document.getElementById('wiz_machine').value) return alert("Maschine fehlt");
-        if(target===5 && !document.getElementById('wiz_employee').value) return alert("Bitte wähle einen Mitarbeiter aus.");
+        if(target===2 && !document.getElementById('wiz_artNr').value.trim()) return alert("Fehlt");
         window.showStep(target);
     };
-    window.prevStep = (t) => window.showStep(t);
 
     window.selectWizSeq = (seq) => {
-        document.getElementById('wiz_sequence').value = seq; document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.toggle('selected', b.innerText === seq));
-        const machGrid = document.getElementById('wiz_machine_grid'); machGrid.innerHTML = ''; document.getElementById('wiz_machine').value = ''; 
+        document.getElementById('wiz_sequence').value = seq; 
+        document.querySelectorAll('#step2 .wiz-option-btn').forEach(b => b.classList.toggle('selected', b.innerText === seq));
+        const machGrid = document.getElementById('wiz_machine_grid'); machGrid.innerHTML = '';
         (machineConfig[seq]||[]).forEach(m => { machGrid.innerHTML += `<div class="wiz-option-btn" onclick="selectWizMachine('${m}', this)">${m}</div>`; });
         setTimeout(() => window.nextStep(3), 200);
     };
 
     window.selectWizMachine = async (mach, btnElement) => {
-        document.getElementById('wiz_machine').value = mach; document.querySelectorAll('#wiz_machine_grid .wiz-option-btn').forEach(b => b.classList.remove('selected')); btnElement.classList.add('selected');
-        const art = document.getElementById('wiz_artNr').value.trim(); const seq = document.getElementById('wiz_sequence').value.trim(); const originalText = btnElement.innerText; btnElement.innerText = "Prüfe...";
-
-        try {
-            const checkQuery = query(collection(db, "ruestblaetter"), where("artNr", "==", art), where("sequence", "==", seq), where("machine", "==", mach));
-            const checkSnapshot = await getDocs(checkQuery); btnElement.innerText = originalText;
-            if (!checkSnapshot.empty) {
-                const docData = checkSnapshot.docs[0].data(); window.currentDuplicateDocId = checkSnapshot.docs[0].id; window.currentDuplicatePhotoUrl = docData.photoUrl || ""; 
-                document.getElementById('duplicateMessage').innerText = `Rüstblatt für diesen Artikel auf dieser Maschine bereits von ${docData.employee || 'Unbekannt'} erstellt.`; document.getElementById('duplicateModal').classList.remove('hidden');
-            } else { window.currentDuplicateDocId = null; window.currentDuplicatePhotoUrl = ""; window.nextStep(4); }
-        } catch (error) { console.error("Fehler bei der Duplikatsprüfung:", error); btnElement.innerText = originalText; window.nextStep(4); }
+        document.getElementById('wiz_machine').value = mach; 
+        document.querySelectorAll('#wiz_machine_grid .wiz-option-btn').forEach(b => b.classList.remove('selected')); 
+        btnElement.classList.add('selected');
+        const art = document.getElementById('wiz_artNr').value.trim(); const seq = document.getElementById('wiz_sequence').value.trim();
+        const checkQuery = query(collection(db, "ruestblaetter"), where("artNr", "==", art), where("sequence", "==", seq), where("machine", "==", mach));
+        const checkSnapshot = await getDocs(checkQuery);
+        if (!checkSnapshot.empty) {
+            window.currentDuplicateDocId = checkSnapshot.docs[0].id;
+            document.getElementById('duplicateModal').classList.remove('hidden');
+        } else { window.nextStep(4); }
     };
 
     window.proceedAfterDuplicate = () => { document.getElementById('duplicateModal').classList.add('hidden'); window.nextStep(4); };
@@ -1279,17 +1304,18 @@
     window.renderWizardToolGrid = () => {
         const grid = document.getElementById('wiz_tool_grid'); grid.innerHTML = '';
         for(let i=1; i<=12; i++) {
-            const data = wizardToolsData[i]; const isDef = !!data; const label = isDef ? data.type : "Leer"; const info = isDef ? (data.details.length > 0 ? data.details[0] : "Belegt") : "Antippen";
-            grid.innerHTML += `<div class="wiz-t-btn ${isDef?'defined':''}" onclick="openModal(${i})"><span class="wiz-t-label">T${i}</span><span class="wiz-t-info">${label}<br>${info}</span></div>`;
+            const data = wizardToolsData[i]; const isDef = !!data;
+            grid.innerHTML += `<div class="wiz-t-btn ${isDef?'defined':''}" onclick="openModal(${i})"><span class="wiz-t-label">T${i}</span><span class="wiz-t-info">${isDef?data.type:'Leer'}</span></div>`;
         }
     };
     
     window.renderCreateToolGrid = () => {
         const cont = document.getElementById('toolContainer'); if(!cont) return; cont.innerHTML = '';
         for(let i=1; i<=12; i++) {
-            const box = document.createElement('div'); box.className = 'tool-box'; let content = `<div class="tool-header"><span class="t-label">T${i}</span></div><div class="assigned-tools" id="tools_list_${i}">`;
+            const box = document.createElement('div'); box.className = 'tool-box'; 
+            let content = `<div class="tool-header"><span class="t-label">T${i}</span></div><div class="assigned-tools">`;
             if(wizardToolsData[i] && wizardToolsData[i].html) content += wizardToolsData[i].html;
-            const btnText = (wizardToolsData[i] && wizardToolsData[i].type) ? '✏️ Ändern' : '+ Werkzeug hinzufügen'; content += `</div><button type="button" class="btn-slot-add no-print" onclick="openModal(${i})">${btnText}</button>`;
+            content += `</div><button type="button" class="btn-slot-add no-print" onclick="openModal(${i})">✏️ Ändern</button>`;
             box.innerHTML = content; cont.appendChild(box);
         }
     };
@@ -1297,317 +1323,216 @@
     window.syncSlider = (id,v) => { const el=document.getElementById(id); if(el) el.value=v; };
     window.syncNum = (id,v) => { const el=document.getElementById(id); if(el) el.value=v; };
     
-    window.filterComplexList = (inputEl) => {
-        const filter = inputEl.value.toUpperCase(); const container = inputEl.nextElementSibling; const items = container.querySelectorAll('.complex-list-item');
-        items.forEach(item => { const text = item.innerText.toUpperCase(); const wrapper = item.parentElement; if(wrapper && wrapper.style.position === 'relative') { wrapper.style.display = text.indexOf(filter) > -1 ? '' : 'none'; } else { item.style.display = text.indexOf(filter) > -1 ? '' : 'none'; } });
-    };
-
     window.renderDynamicFields = (definitionList, containerId, prefix) => {
         const c = document.getElementById(containerId); c.innerHTML = '';
         (definitionList||[]).forEach(f => {
-            const wrapper = document.createElement('div'); wrapper.className = 'field-group'; const targetId = `${prefix}_${f.id}`; let html = `<span class="field-label">${f.label}</span>`;
+            const wrapper = document.createElement('div'); wrapper.className = 'field-group'; 
+            const targetId = `${prefix}_${f.id}`; let html = `<span class="field-label">${f.label}</span>`;
             if (f.type === 'buttons') {
                 html += `<div class="preset-grid">`;
                 f.options.forEach(opt => {
-                    if (typeof opt === 'object' && opt !== null) {
-                        const valToSave = opt.desc ? `${opt.val} (${opt.desc})` : opt.val; const safeVal = valToSave.replace(/'/g, "´").replace(/"/g, '&quot;');
-                        html += `<button type="button" class="preset-btn" onclick="selectPreset('${targetId}', '${safeVal}', this)" style="display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.2; gap:4px;"><span>${opt.val}</span>${opt.desc ? `<span class="preset-desc" style="font-size:0.85em; color:#7f8c8d; font-weight:normal; margin-top:2px; transition: color 0.1s;">${opt.desc}</span>` : ''}</button>`;
-                    } else { html += `<button type="button" class="preset-btn" onclick="selectPreset('${targetId}', '${opt}', this)">${opt}</button>`; }
+                    const val = (typeof opt === 'object') ? opt.val : opt;
+                    html += `<button type="button" class="preset-btn" onclick="selectPreset('${targetId}', '${val}', this)">${val}</button>`;
                 });
-                html += `</div>`; const inputType = f.allowCustom ? 'text' : 'hidden'; const ph = f.allowCustom ? '...oder eigenen Wert eingeben' : ''; html += `<input type="${inputType}" id="${targetId}" class="custom-input" placeholder="${ph}">`;
-            } else if (f.type === 'dynamic-wendeplatten-list') { 
-                html += `<input type="text" class="wizard-input list-search" placeholder="🔍 ${f.label} durchsuchen..." onkeyup="filterComplexList(this)" style="margin-bottom:10px; border-color: var(--sec);">`; html += `<div class="complex-list-container">`;
+                html += `</div><input type="${f.allowCustom?'text':'hidden'}" id="${targetId}" class="custom-input">`;
+            } else if (f.type === 'dynamic-wendeplatten-list') {
+                html += `<div class="complex-list-container">`;
                 (window.wendeplattenList || []).forEach((opt, idx) => {
-                    const valToSave = opt.desc ? `${opt.val} (${opt.desc})` : opt.val; const safeVal = valToSave.replace(/'/g, "´").replace(/"/g, '&quot;');
-                    html += `<div style="position:relative; border-bottom: 1px solid #eee;"><div class="preset-btn complex-list-item" onclick="selectPreset('${targetId}', '${safeVal}', this)" style="border-bottom:none; padding-right: 50px;"><span class="item-title">${opt.val}</span><span class="item-desc">${opt.desc}</span></div><span class="btn-delete-badge" style="top:50%; right:15px; transform:translateY(-50%);" onclick="deleteWendeplatte(${idx}, event)" title="Löschen">✖</span></div>`;
+                    html += `<div class="preset-btn complex-list-item" onclick="selectPreset('${targetId}', '${opt.val}', this)">${opt.val}</div>`;
                 });
-                if(window.wendeplattenList.length === 0) html += `<div style="padding:15px; color:#999; text-align:center;">Keine Wendeplatten gespeichert.</div>`; html += `</div>`; html += `<input type="hidden" id="${targetId}" class="custom-input">`;
-                html += `<div style="margin-top: 15px; padding: 15px; background: #fdfdfd; border: 2px dashed #ccc; border-radius: 8px;"><label style="font-size:1em; font-weight:bold; color:var(--primary); margin-bottom:10px; display:block;">+ Neue Wendeplatte anlegen</label><input type="text" id="new_w_iso" class="wizard-input" placeholder="ISO Code (z.B. CNMG 120408)" style="margin-bottom:8px; padding:10px;"><input type="text" id="new_w_desc" class="wizard-input" placeholder="Beschreibung (z.B. Schruppplatte R0.8)" style="margin-bottom:12px; padding:10px;"><button type="button" class="btn-action" style="background: var(--sec); padding: 12px; font-size: 1.1em;" onclick="addNewWendeplatte()">Speichern & Hinzufügen</button></div>`;
-            } else if (f.type === 'dynamic-reibahlen-list') {
-                html += `<input type="text" class="wizard-input list-search" placeholder="🔍 ${f.label} durchsuchen..." onkeyup="filterComplexList(this)" style="margin-bottom:10px; border-color: var(--sec);">`; html += `<div class="complex-list-container">`;
-                (window.reibahlenList || []).forEach((opt, idx) => {
-                    const valToSave = opt.desc ? `${opt.val} (${opt.desc})` : opt.val; const safeVal = valToSave.replace(/'/g, "´").replace(/"/g, '&quot;');
-                    html += `<div style="position:relative; border-bottom: 1px solid #eee;"><div class="preset-btn complex-list-item" onclick="selectPreset('${targetId}', '${safeVal}', this)" style="border-bottom:none; padding-right: 50px;"><span class="item-title">${opt.val}</span><span class="item-desc">${opt.desc}</span></div><span class="btn-delete-badge" style="top:50%; right:15px; transform:translateY(-50%);" onclick="deleteReibahle(${idx}, event)" title="Löschen">✖</span></div>`;
-                });
-                if(window.reibahlenList.length === 0) html += `<div style="padding:15px; color:#999; text-align:center;">Keine Reibahlen gespeichert.</div>`; html += `</div>`; html += `<input type="hidden" id="${targetId}" class="custom-input">`;
-                html += `<div style="margin-top: 15px; padding: 15px; background: #fdfdfd; border: 2px dashed #ccc; border-radius: 8px;"><label style="font-size:1em; font-weight:bold; color:var(--primary); margin-bottom:10px; display:block;">+ Neue Reibahle anlegen</label><input type="text" id="new_r_bez" class="wizard-input" placeholder="Bezeichnung (z.B. Reibahle Ø40)" style="margin-bottom:8px; padding:10px;"><input type="text" id="new_r_art" class="wizard-input" placeholder="Artikelnummer (z.B. 40 577 40000)" style="margin-bottom:12px; padding:10px;"><button type="button" class="btn-action" style="background: var(--sec); padding: 12px; font-size: 1.1em;" onclick="addNewReibahle()">Speichern & Hinzufügen</button></div>`;
+                html += `</div><input type="hidden" id="${targetId}">`;
             } else if (f.type === 'range-slider') {
-                html += `<div class="slider-group" style="margin-bottom:0; padding-bottom: 25px;"><div class="slider-header" style="justify-content: space-between; align-items: center; display: flex; margin-bottom: 25px;"><div style="display:flex; align-items:center; gap:10px;"><label style="margin:0; font-weight:bold; color:var(--primary);">Von:</label><input type="number" id="${targetId}_min" value="0" min="0" max="400" oninput="syncMultiRange('${targetId}')"></div><div style="display:flex; align-items:center; gap:10px;"><label style="margin:0; font-weight:bold; color:var(--primary);">Bis:</label><input type="number" id="${targetId}_max" value="400" min="0" max="400" oninput="syncMultiRange('${targetId}')"></div></div><div class="multi-range-container"><div class="multi-range-track"></div><div class="multi-range-highlight" id="${targetId}_highlight" style="left: 0%; right: 0%;"></div><input type="range" id="${targetId}_s_min" class="multi-range-input" min="0" max="400" value="0" oninput="syncMultiRangeSlider('${targetId}', 'min')"><input type="range" id="${targetId}_s_max" class="multi-range-input" min="0" max="400" value="400" oninput="syncMultiRangeSlider('${targetId}', 'max')"></div></div>`;
-            } else { html += `<input type="text" id="${targetId}" class="custom-input" placeholder="${f.placeholder||''}">`; }
-            wrapper.innerHTML = html; c.appendChild(wrapper); if (f.type === 'range-slider') setTimeout(() => window.updateMultiRangeHighlight(targetId), 50);
+                html += `<div class="multi-range-container"><div class="multi-range-track"></div><div class="multi-range-highlight" id="${targetId}_highlight"></div><input type="range" id="${targetId}_s_min" class="multi-range-input" min="0" max="400" value="0" oninput="syncMultiRangeSlider('${targetId}', 'min')"><input type="range" id="${targetId}_s_max" class="multi-range-input" min="0" max="400" value="400" oninput="syncMultiRangeSlider('${targetId}', 'max')"></div><input type="hidden" id="${targetId}_min" value="0"><input type="hidden" id="${targetId}_max" value="400">`;
+            } else { html += `<input type="text" id="${targetId}" class="custom-input">`; }
+            wrapper.innerHTML = html; c.appendChild(wrapper);
         });
     };
 
     window.selectWizClampingType = (type) => {
-        window.currentWizClampingType = type; document.getElementById('btnWizSpannbacken').classList.toggle('selected', type === 'Spannbacken'); document.getElementById('btnWizSpanndorn').classList.toggle('selected', type === 'Spanndorn');
-        window.renderDynamicFields(clampingDefinitions[type], 'wiz_clamping_fields', 'wiz_clamp'); document.getElementById('wiz_clamping_fields').style.display = 'block';
+        window.currentWizClampingType = type; 
+        document.getElementById('btnWizSpannbacken').classList.toggle('selected', type === 'Spannbacken'); 
+        document.getElementById('btnWizSpanndorn').classList.toggle('selected', type === 'Spanndorn');
+        window.renderDynamicFields(clampingDefinitions[type], 'wiz_clamping_fields', 'wiz_clamp'); 
+        document.getElementById('wiz_clamping_fields').style.display = 'block';
     };
 
     window.saveWizClampingAndNext = () => {
-        if(!window.currentWizClampingType) return alert("Bitte wähle Spannbacken oder Spanndorn aus!");
         let details = []; const type = window.currentWizClampingType;
         (clampingDefinitions[type]||[]).forEach(f => {
-            if (f.type === 'range-slider') {
-                const valMin = document.getElementById(`wiz_clamp_${f.id}_min`) ? parseInt(document.getElementById(`wiz_clamp_${f.id}_min`).value) : 0; const valMax = document.getElementById(`wiz_clamp_${f.id}_max`) ? parseInt(document.getElementById(`wiz_clamp_${f.id}_max`).value) : 0;
-                if(valMin === valMax) details.push(`Spann-Ø: ${valMin}mm`); else details.push(`Spann-Ø: ${valMin}-${valMax}mm`);
-            } else {
-                const el = document.getElementById(`wiz_clamp_${f.id}`); if(el && el.value) { let val = el.value.trim(); if(f.id === 'druck' && !val.includes('bar')) details.push(`Druck: ${val} bar`); else if(f.id === 'druck') details.push(`Druck: ${val}`); else details.push(val); }
-            }
+            const el = document.getElementById(`wiz_clamp_${f.id}`);
+            if(el && el.value) details.push(el.value);
         });
-        wizardClampingData = [{ type: type, details: details }]; window.renderDynamicFields(clampingDefinitions['Zentrierung'], 'wiz_zentrierung_fields', 'wiz_zent'); window.nextStep(7);
+        wizardClampingData = [{ type: type, details: details }]; 
+        window.renderDynamicFields(clampingDefinitions['Zentrierung'], 'wiz_zentrierung_fields', 'wiz_zent'); 
+        window.nextStep(7);
     };
 
     window.saveWizZentrierungAndFinish = () => {
-        let details = []; (clampingDefinitions['Zentrierung']||[]).forEach(f => { const el = document.getElementById(`wiz_zent_${f.id}`); if(el && el.value) details.push(el.value.trim()); });
-        if (details.length > 0 && details[0] !== "Entfällt") wizardClampingData.push({ type: "Zentrierung", details: details }); window.finishWizard();
+        let details = []; 
+        const el = document.getElementById(`wiz_zent_size`);
+        if(el && el.value && el.value !== "Entfällt") wizardClampingData.push({ type: "Zentrierung", details: [el.value] });
+        window.finishWizard();
     };
 
     window.removeClampingItem = (index) => { wizardClampingData.splice(index, 1); window.renderClampingUI(); };
 
     window.openClampingModal = () => {
-        document.getElementById('modalCustomClampingInput').classList.add('hidden'); document.getElementById('modalClampingType').classList.remove('hidden'); document.getElementById('modalClampingType').selectedIndex=0;
         window.renderClampingFields(); document.getElementById('clampingModal').classList.remove('hidden');
     };
-    
     window.closeClampingModal = () => document.getElementById('clampingModal').classList.add('hidden');
 
     window.renderClampingFields = () => {
-        const type = document.getElementById('modalClampingType').value; const isCust = !document.getElementById('modalCustomClampingInput').classList.contains('hidden');
-        if(isCust) { document.getElementById('dynamicClampingFieldsContainer').innerHTML=`<div class="field-group"><label class="field-label">Details</label><input type="text" id="dyn_clamp_details" placeholder="Genaue Bezeichnung..." class="custom-input"></div>`; return; }
-        window.renderDynamicFields(clampingDefinitions[type], 'dynamicClampingFieldsContainer', 'dyn_clamp');
+        window.renderDynamicFields(clampingDefinitions['Spannbacken'], 'dynamicClampingFieldsContainer', 'dyn_clamp');
     };
 
     window.saveClampingFromModal = () => {
-        let type, details=[]; const isCust = !document.getElementById('modalCustomClampingInput').classList.contains('hidden');
-        if(isCust) { type = document.getElementById('modalCustomClampingInput').value.trim() || "Spannmittel"; let d = document.getElementById('dyn_clamp_details').value.trim(); if(d) details.push(d); } else { 
-            type = document.getElementById('modalClampingType').value; 
-            (clampingDefinitions[type]||[]).forEach(f=>{ 
-                if (f.type === 'range-slider') {
-                    const valMin = document.getElementById(`dyn_clamp_${f.id}_min`) ? parseInt(document.getElementById(`dyn_clamp_${f.id}_min`).value) : 0; const valMax = document.getElementById(`dyn_clamp_${f.id}_max`) ? parseInt(document.getElementById(`dyn_clamp_${f.id}_max`).value) : 0;
-                    if(valMin === valMax) details.push(`Spann-Ø: ${valMin}mm`); else details.push(`Spann-Ø: ${valMin}-${valMax}mm`);
-                } else { const el=document.getElementById(`dyn_clamp_${f.id}`); if(el && el.value) { let val = el.value.trim(); if(f.id === 'druck' && !val.includes('bar')) details.push(`Druck: ${val} bar`); else if(f.id === 'druck') details.push(`Druck: ${val}`); else details.push(val); } }
-            }); 
-        }
-        if(details.length === 0 && !isCust) details.push("Standard"); wizardClampingData.push({ type: type, details: details }); window.renderClampingUI(); window.closeClampingModal();
+        wizardClampingData.push({ type: "Zusatzspannung", details: ["Manuell hinzugefügt"] }); 
+        window.renderClampingUI(); window.closeClampingModal();
     };
 
     window.renderClampingUI = () => {
         const clampCont = document.getElementById('clampingContainer'); clampCont.innerHTML = '';
         wizardClampingData.forEach((clamp, idx) => {
-            clampCont.innerHTML += `<div class="tool-box"><div class="tool-header"><span class="t-label">${clamp.type}</span></div><div class="assigned-tools"><div class="assigned-item"><div class="item-text" style="font-size:1.1em;"><strong>${clamp.type}</strong><br>${clamp.details.join(', ')}</div><span class="btn-delete-badge" style="position:relative; right:0; top:0; height:35px; width:35px;" onclick="removeClampingItem(${idx})">✖</span></div></div></div>`;
+            clampCont.innerHTML += `<div class="tool-box"><div class="tool-header"><span class="t-label">${clamp.type}</span></div><div class="assigned-tools"><div class="assigned-item">${clamp.details.join(', ')}</div></div><button type="button" class="btn-slot-add" onclick="removeClampingItem(${idx})">🗑️ Entfernen</button></div>`;
         });
-        document.getElementById('clampingCard').style.display = 'block';
     };
     
     window.selectPreset = (targetId, value, btnElement) => {
         const input = document.getElementById(targetId); if(input) input.value = value;
-        const container = btnElement.parentElement; container.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active');
+        btnElement.parentElement.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active');
     };
 
     window.initModalDropdown = () => {
-        const s = document.getElementById('modalToolType'); s.innerHTML=''; Object.keys(toolDefinitions).forEach(k => s.innerHTML+=`<option>${k}</option>`); window.renderToolFields();
-        const cs = document.getElementById('modalClampingType'); cs.innerHTML=''; Object.keys(clampingDefinitions).forEach(k => cs.innerHTML+=`<option>${k}</option>`);
+        const s = document.getElementById('modalToolType'); s.innerHTML=''; 
+        Object.keys(toolDefinitions).forEach(k => s.innerHTML+=`<option>${k}</option>`); window.renderToolFields();
+        const cs = document.getElementById('modalClampingType'); if(cs) { cs.innerHTML=''; Object.keys(clampingDefinitions).forEach(k => cs.innerHTML+=`<option>${k}</option>`); }
     };
 
     window.toggleCustomType = (modalContext) => { 
-        if(modalContext === 'tool') {
-            const i=document.getElementById('modalCustomTypeInput'), s=document.getElementById('modalToolType'); if(i.classList.contains('hidden')){i.classList.remove('hidden');s.classList.add('hidden');}else{i.classList.add('hidden');s.classList.remove('hidden');} window.renderToolFields();
-        } else {
-            const i=document.getElementById('modalCustomClampingInput'), s=document.getElementById('modalClampingType'); if(i.classList.contains('hidden')){i.classList.remove('hidden');s.classList.add('hidden');}else{i.classList.add('hidden');s.classList.remove('hidden');} window.renderClampingFields();
-        }
+        const i=document.getElementById('modalCustomTypeInput'), s=document.getElementById('modalToolType'); 
+        i.classList.toggle('hidden'); s.classList.toggle('hidden');
     };
 
     window.renderToolFields = () => {
-        const type = document.getElementById('modalToolType').value; const isCust = !document.getElementById('modalCustomTypeInput').classList.contains('hidden');
-        if(isCust) { document.getElementById('dynamicFieldsContainer').innerHTML=`<div class="field-group"><label class="field-label">Details</label><input type="text" id="dyn_tool_details" placeholder="Eigene Beschreibung..." class="custom-input"></div>`; return; }
+        const type = document.getElementById('modalToolType').value;
         window.renderDynamicFields(toolDefinitions[type], 'dynamicFieldsContainer', 'dyn_tool');
     };
 
     window.openModal = (i) => {
-        currentTIndex = i; document.getElementById('modalTargetT').innerText = "T"+i; document.getElementById('modalLenSlider').value = 50; document.getElementById('modalLenNum').value = 50;
-        document.getElementById('modalCustomTypeInput').classList.add('hidden'); document.getElementById('modalToolType').classList.remove('hidden'); document.getElementById('modalToolType').selectedIndex = 0;
-        document.getElementById('modalToolPreview').style.display = 'none'; currentModalImageSrc = ""; document.getElementById('modalToolPhoto').value = "";
-        
-        const existingData = wizardToolsData[i];
-        if (existingData && existingData.rawValues) {
-            const rv = existingData.rawValues;
-            if (rv.isCust) {
-                document.getElementById('modalCustomTypeInput').classList.remove('hidden'); document.getElementById('modalToolType').classList.add('hidden'); document.getElementById('modalCustomTypeInput').value = rv.customType || ""; window.renderToolFields();
-                setTimeout(() => { if(document.getElementById('dyn_tool_details')) document.getElementById('dyn_tool_details').value = rv.customDetails || ""; }, 10);
-            } else {
-                document.getElementById('modalToolType').value = rv.type; window.renderToolFields();
-                setTimeout(() => {
-                    (toolDefinitions[rv.type]||[]).forEach(f => {
-                        if (rv[f.id]) {
-                            const el = document.getElementById(`dyn_tool_${f.id}`);
-                            if(el) { el.value = rv[f.id]; const parent = el.parentElement;
-                                if(parent) { parent.querySelectorAll('.preset-btn').forEach(btn => { const safeVal = rv[f.id].replace(/'/g, "´").replace(/"/g, '&quot;'); if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(safeVal)) { btn.classList.add('active'); } else if (btn.innerText.trim() === rv[f.id].trim()) { btn.classList.add('active'); } }); }
-                            }
-                        }
-                    });
-                }, 10);
-            }
-            document.getElementById('modalLenNum').value = rv.len || 50; document.getElementById('modalLenSlider').value = rv.len || 50;
-            if (existingData.imgUrl) { currentModalImageSrc = existingData.imgUrl; document.getElementById('modalToolPreview').src = currentModalImageSrc; document.getElementById('modalToolPreview').style.display = 'block'; }
-            document.getElementById('btnModalClear').style.display = 'block';
-        } else { window.renderToolFields(); document.getElementById('btnModalClear').style.display = 'none'; }
-        document.getElementById('toolModal').classList.remove('hidden');
+        currentTIndex = i; document.getElementById('modalTargetT').innerText = "T"+i;
+        document.getElementById('modalToolPreview').style.display = 'none'; currentModalImageSrc = "";
+        window.renderToolFields(); document.getElementById('toolModal').classList.remove('hidden');
     };
-    
     window.closeModal = () => document.getElementById('toolModal').classList.add('hidden');
     
-    window.clearToolFromModal = () => { if(!currentTIndex) return; delete wizardToolsData[currentTIndex]; window.renderWizardToolGrid(); if(!document.getElementById('create-view').classList.contains('hidden')) window.renderCreateToolGrid(); window.closeModal(); };
+    window.clearToolFromModal = () => { delete wizardToolsData[currentTIndex]; window.renderWizardToolGrid(); window.closeModal(); };
     
     window.handleModalPhoto = (inp) => { 
-        if(inp.files[0]){ const status = document.getElementById('modal_compress_status'); status.style.display = 'block'; window.compressImage(inp.files[0], (compressedDataUrl) => { currentModalImageSrc = compressedDataUrl; document.getElementById('modalToolPreview').src = compressedDataUrl; document.getElementById('modalToolPreview').style.display = 'block'; status.style.display = 'none'; }); }
+        if(inp.files[0]){ window.compressImage(inp.files[0], (compressed) => { currentModalImageSrc = compressed; document.getElementById('modalToolPreview').src = compressed; document.getElementById('modalToolPreview').style.display = 'block'; }); }
     };
 
     window.saveToolFromModal = async () => {
-        if(!currentTIndex) return; const btnSave = document.getElementById('btnModalSave'); btnSave.innerText = "Speichere..."; btnSave.disabled = true;
-        let imgBase64 = currentModalImageSrc || ""; let type, details=[]; let rawValues = {}; const isCust = !document.getElementById('modalCustomTypeInput').classList.contains('hidden');
-        if(isCust) { 
-            type = document.getElementById('modalCustomTypeInput').value.trim()||"Werkzeug"; let d=document.getElementById('dyn_tool_details').value.trim(); if(d) details.push(d); rawValues.isCust = true; rawValues.customType = type; rawValues.customDetails = d;
-        } else { 
-            type=document.getElementById('modalToolType').value; rawValues.isCust = false; rawValues.type = type;
-            (toolDefinitions[type]||[]).forEach(f=>{ const el=document.getElementById(`dyn_tool_${f.id}`); if(el && el.value){ let val = el.value.trim(); rawValues[f.id] = val; if(f.id==='diam') details.push(`Ø${val}${f.unit||''}`); else if(f.id==='radius') details.push(`R${val}${f.unit||''}`); else if(f.id==='ik') details.push(`IK: ${val}`); else if(f.id==='count') details.push(`${val} Rollen`); else details.push(val); } }); 
-        }
-        const len = document.getElementById('modalLenNum').value; rawValues.len = len;
-        const imgHtml = imgBase64 ? `<img src="${imgBase64}" class="item-img" style="cursor:zoom-in;" onclick="event.stopPropagation(); openLightbox('${imgBase64}')">` : ''; const detailHtml = details.length > 0 ? `<br>${details.join(', ')}` : '';
-        const itemHtml = `<div class="assigned-item">${imgHtml}<div class="item-text"><strong>${type}</strong>${detailHtml}<br><span style="color:#666;font-size:0.9em">L: ${len} mm</span></div></div>`;
-        wizardToolsData[currentTIndex] = { html: itemHtml, type: type, details: details, len: len, imgUrl: imgBase64, rawValues: rawValues };
+        const type = document.getElementById('modalToolType').value;
+        const len = document.getElementById('modalLenNum').value;
+        const imgHtml = currentModalImageSrc ? `<img src="${currentModalImageSrc}" class="item-img" onclick="event.stopPropagation(); openLightbox('${currentModalImageSrc}')">` : '';
+        const itemHtml = `<div class="assigned-item">${imgHtml}<div class="item-text"><strong>${type}</strong><br>L: ${len} mm</div></div>`;
+        wizardToolsData[currentTIndex] = { html: itemHtml, type: type, len: len, imgUrl: currentModalImageSrc };
         window.renderWizardToolGrid(); if(!document.getElementById('create-view').classList.contains('hidden')) window.renderCreateToolGrid();
-        btnSave.innerText = "Speichern"; btnSave.disabled = false; window.closeModal();
+        window.closeModal();
     };
 
     window.previewImage = (inp, id) => { 
-        if(inp.files[0]){ const status = document.getElementById('setup_compress_status'); status.style.display = 'block'; window.compressImage(inp.files[0], (compressedDataUrl) => { document.getElementById(id).src = compressedDataUrl; document.getElementById(id).style.display = 'block'; currentMainPhotoSrc = compressedDataUrl; status.style.display = 'none'; }); }
+        if(inp.files[0]){ window.compressImage(inp.files[0], (comp) => { document.getElementById(id).src = comp; document.getElementById(id).style.display = 'block'; currentMainPhotoSrc = comp; }); }
     };
 
     window.finishWizard = () => {
-        document.getElementById('artNr').value = document.getElementById('wiz_artNr').value.trim(); document.getElementById('sequence').value = document.getElementById('wiz_sequence').value.trim(); document.getElementById('machine').value = document.getElementById('wiz_machine').value.trim(); document.getElementById('employee').value = document.getElementById('wiz_employee').value.trim();
+        document.getElementById('artNr').value = document.getElementById('wiz_artNr').value; 
+        document.getElementById('sequence').value = document.getElementById('wiz_sequence').value; 
+        document.getElementById('machine').value = document.getElementById('wiz_machine').value; 
+        document.getElementById('employee').value = document.getElementById('wiz_employee').value;
         window.renderClampingUI(); window.renderCreateToolGrid(); 
-        if (currentMainPhotoSrc) { document.getElementById('setupPreview').src = currentMainPhotoSrc; document.getElementById('setupPreview').style.display = 'block'; } else { document.getElementById('setupPreview').style.display = 'none'; }
         window.closeWizard(); window.switchView('create');
     };
 
     window.duplicateCurrentSetup = () => {
         const data = window.currentDetailData; if(!data) return;
-        document.getElementById('artNr').value = data.artNr + " (Kopie)"; document.getElementById('sequence').value = data.sequence || ""; document.getElementById('machine').value = data.machine || ""; document.getElementById('employee').value = data.employee || "";
-        wizardToolsData = JSON.parse(JSON.stringify(data.wizardToolsData || {})); wizardClampingData = JSON.parse(JSON.stringify(data.wizardClampingData || [])); currentMainPhotoSrc = data.photoUrl || "";
-        window.renderClampingUI(); window.renderCreateToolGrid(); 
-        if (currentMainPhotoSrc) { document.getElementById('setupPreview').src = currentMainPhotoSrc; document.getElementById('setupPreview').style.display = 'block'; } else { document.getElementById('setupPreview').style.display = 'none'; }
-        window.currentDuplicateDocId = null; window.switchView('create'); window.scrollTo(0, 0);
+        document.getElementById('artNr').value = data.artNr + " (Kopie)";
+        wizardToolsData = data.wizardToolsData || {}; wizardClampingData = data.wizardClampingData || [];
+        window.renderClampingUI(); window.renderCreateToolGrid(); window.switchView('create');
     };
 
     window.populateHiddenPdfTemplate = (art, seq, mach, emp, photoBase64) => {
-        document.getElementById('pdfDate').innerText = new Date().toLocaleDateString(); document.getElementById('pdfArt').innerText = art; document.getElementById('pdfSeq').innerText = seq; document.getElementById('pdfMach').innerText = mach; document.getElementById('pdfEmp').innerText = emp;
+        document.getElementById('pdfDate').innerText = new Date().toLocaleDateString(); 
+        document.getElementById('pdfArt').innerText = art; 
+        document.getElementById('pdfMach').innerText = mach; 
+        document.getElementById('pdfEmp').innerText = emp;
         const ct = document.getElementById('pdfClampingTable'); ct.innerHTML = '';
-        if (wizardClampingData.length > 0) { wizardClampingData.forEach(c => { ct.innerHTML += `<tr class="avoid-break"><th>${c.type}</th><td>${c.details.join(', ')}</td></tr>`; }); } else { ct.innerHTML = '<tr><td colspan="2" style="color:#888;">Keine Spannmittel definiert</td></tr>'; }
-        const tt = document.getElementById('pdfToolsTable'); tt.innerHTML = ''; let hasTools = false;
+        wizardClampingData.forEach(c => { ct.innerHTML += `<tr><th>${c.type}</th><td>${c.details.join(', ')}</td></tr>`; });
+        const tt = document.getElementById('pdfToolsTable'); tt.innerHTML = '';
         for(let i=1; i<=12; i++) {
-            if(wizardToolsData[i] && wizardToolsData[i].type) { hasTools = true; const t = wizardToolsData[i]; const imgSrc = t.imgUrl; const imgCell = imgSrc ? `<img src="${imgSrc}" class="pdf-t-img">` : '';
-                tt.innerHTML += `<tr class="avoid-break"><th style="width: 15%; text-align: center; font-size: 14pt;">T${i}</th><td style="width: 10%; text-align: center;">${imgCell}</td><td><strong>${t.type}</strong><br>${t.details.join(', ')}<br><span style="color:#555; font-size: 10pt;">Ausspannlänge: ${t.len} mm</span></td></tr>`;
+            if(wizardToolsData[i]) {
+                const t = wizardToolsData[i];
+                tt.innerHTML += `<tr><th>T${i}</th><td>${t.imgUrl?`<img src="${t.imgUrl}" class="pdf-t-img">`:''}</td><td><strong>${t.type}</strong><br>L: ${t.len}mm</td></tr>`;
             }
         }
-        if(!hasTools) tt.innerHTML = '<tr><td colspan="3" style="color:#888;">Keine Werkzeuge belegt</td></tr>';
-        const photoSection = document.getElementById('pdfPhotoSection');
-        if(photoBase64) { document.getElementById('pdfSetupImg').src = photoBase64; photoSection.style.display = 'block'; } else { photoSection.style.display = 'none'; }
+        if(photoBase64) { document.getElementById('pdfSetupImg').src = photoBase64; document.getElementById('pdfPhotoSection').style.display = 'block'; }
     };
 
     window.processAndSendWithPDF = async () => {
-        const art = document.getElementById('artNr').value.trim(); const seq = document.getElementById('sequence').value.trim(); const mach = document.getElementById('machine').value.trim(); const emp = document.getElementById('employee').value.trim();
-        if(!art || !emp) return alert("Artikelnummer und Mitarbeiter fehlen!");
-
-        let existingDocId = window.currentDuplicateDocId; let existingPhotoUrl = window.currentDuplicatePhotoUrl;
-        if (!existingDocId) {
-            try {
-                const checkQuery = query(collection(db, "ruestblaetter"), where("artNr", "==", art), where("sequence", "==", seq), where("machine", "==", mach)); const checkSnapshot = await getDocs(checkQuery);
-                if (!checkSnapshot.empty) { const docData = checkSnapshot.docs[0].data(); const overwrite = confirm(`⚠️ Duplikat gefunden!\n\nMöchtest du das bestehende Rüstblatt überschreiben?`); if (!overwrite) return; existingDocId = checkSnapshot.docs[0].id; existingPhotoUrl = docData.photoUrl || ""; }
-            } catch (error) { console.error("Fehler bei der Duplikatsabfrage:", error); }
-        }
-
-        const btn = document.getElementById('btnProcess'); btn.innerText = "Bitte warten... PDF wird erzeugt & gesendet"; btn.disabled = true; let mainPhotoBase64 = currentMainPhotoSrc || existingPhotoUrl;
+        const art = document.getElementById('artNr').value; 
+        const mach = document.getElementById('machine').value; 
+        const emp = document.getElementById('employee').value;
+        const btn = document.getElementById('btnProcess'); btn.innerText = "Sende..."; btn.disabled = true;
         
         try {
-            const dataToSave = { artNr: art, sequence: seq, machine: mach, employee: emp, photoUrl: mainPhotoBase64, toolsHtml: document.getElementById('toolContainer').innerHTML, clampingHtml: document.getElementById('clampingContainer').innerHTML, wizardToolsData: wizardToolsData, wizardClampingData: wizardClampingData, createdAt: serverTimestamp(), dateString: new Date().toLocaleDateString() };
-            try { if (existingDocId) await setDoc(doc(db, "ruestblaetter", existingDocId), dataToSave); else await addDoc(collection(db, "ruestblaetter"), dataToSave); } catch(e) { console.error(e); alert("⚠️ Speichern in der Datenbank fehlgeschlagen. Sind deine Firestore Rules abgelaufen?"); throw new Error("DB aborted"); }
-            window.populateHiddenPdfTemplate(art, seq, mach, emp, mainPhotoBase64); const templateEl = document.getElementById('hiddenPdfTemplate'); const mainApp = document.getElementById('mainApp');
-            mainApp.style.display = 'none'; templateEl.style.display = 'block'; window.scrollTo(0, 0); 
-            const opt = { margin: 0, filename: `Ruestblatt_${art}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, pagebreak: { mode: 'css' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-            let base64PdfData = ""; try { const pdfBase64Url = await html2pdf().set(opt).from(templateEl).outputPdf('datauristring'); base64PdfData = pdfBase64Url.split(',')[1]; } catch (err) { console.error("PDF Fehler:", err); alert("⚠️ Das PDF konnte nicht generiert werden."); throw err; }
-            templateEl.style.display = 'none'; mainApp.style.display = 'block';
-            try { 
-                await fetch(GOOGLE_SCRIPT_URL, { 
-                    method: "POST", 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ 
-                        type: "SETUP_SHEET", 
-                        pdfBase64: base64PdfData, 
-                        artNr: art, 
-                        machine: mach, 
-                        employee: emp,
-                        recipient: EMAIL_RUESTBLATT // ➔ Nutzt die Einstellung von ganz oben
-                    }) 
-                }); 
-            } catch (err) { console.error("Mail Fehler:", err); alert("⚠️ PDF in Datenbank gespeichert, aber E-Mail-Versand fehlgeschlagen (Google Apps Script blockiert?)."); throw err; }
-            alert("Erfolgreich in der Datenbank gespeichert und als PDF-Mail versendet!");
-            document.getElementById('setupForm').reset(); document.getElementById('toolContainer').innerHTML = ''; document.getElementById('clampingContainer').innerHTML = ''; document.getElementById('setupPreview').style.display = 'none'; currentMainPhotoSrc = ""; wizardToolsData = {}; wizardClampingData = []; window.currentDuplicateDocId = null; window.currentDuplicatePhotoUrl = ""; window.currentDetailData = null; window.switchView('landing');
-        } catch (error) { console.error("Gesamtprozess gestoppt:", error); } 
-        finally { btn.innerText = "Speichern & Automatisch als E-Mail senden"; btn.disabled = false; document.getElementById('hiddenPdfTemplate').style.display = 'none'; document.getElementById('mainApp').style.display = 'block'; }
-    };
-
-    window.resendMailFromDetail = async () => {
-        const btn = document.getElementById('btnResend'); btn.innerText = "Sende E-Mail..."; btn.disabled = true;
-        const art = document.getElementById('det_artNr').innerText; const seq = document.getElementById('det_sequence').innerText; const mach = document.getElementById('det_machine').innerText; const emp = document.getElementById('det_employee').innerText; const photoUrl = document.getElementById('det_setupPreview').src;
-        window.populateHiddenPdfTemplate(art, seq, mach, emp, photoUrl && photoUrl !== window.location.href ? photoUrl : null); const templateEl = document.getElementById('hiddenPdfTemplate'); const mainApp = document.getElementById('mainApp');
-        mainApp.style.display = 'none'; templateEl.style.display = 'block'; window.scrollTo(0, 0);
-        try {
-            const opt = { margin: 0, filename: `Ruestblatt_${art}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, pagebreak: { mode: 'css' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-            const pdfBase64Url = await html2pdf().set(opt).from(templateEl).outputPdf('datauristring'); const base64PdfData = pdfBase64Url.split(',')[1];
+            const dataToSave = { artNr: art, machine: mach, employee: emp, photoUrl: currentMainPhotoSrc, toolsHtml: document.getElementById('toolContainer').innerHTML, wizardToolsData: wizardToolsData, wizardClampingData: wizardClampingData, createdAt: serverTimestamp(), dateString: new Date().toLocaleDateString() };
+            await addDoc(collection(db, "ruestblaetter"), dataToSave);
+            window.populateHiddenPdfTemplate(art, "", mach, emp, currentMainPhotoSrc);
+            const templateEl = document.getElementById('hiddenPdfTemplate');
+            const pdfBase64Url = await html2pdf().from(templateEl).outputPdf('datauristring');
+            const base64PdfData = pdfBase64Url.split(',')[1];
+            
             await fetch(GOOGLE_SCRIPT_URL, { 
-                method: "POST", 
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ 
-                    type: "SETUP_SHEET", 
-                    pdfBase64: base64PdfData, 
-                    artNr: art, 
-                    machine: mach, 
-                    employee: emp,
-                    recipient: EMAIL_RUESTBLATT // ➔ Nutzt die Einstellung von ganz oben
-                }) 
+                method: "POST", headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ type: "SETUP_SHEET", pdfBase64: base64PdfData, artNr: art, machine: mach, employee: emp, recipient: window.currentEmailRuestblatt }) 
             }); 
-            alert("Das Rüstblatt wurde erfolgreich erneut per E-Mail gesendet!");
-        } catch(e) { console.error(e); alert("⚠️ Fehler beim Erstellen oder Versenden der Mail!"); }
-        templateEl.style.display = 'none'; mainApp.style.display = 'block'; btn.innerText = "Erneut als E-Mail senden"; btn.disabled = false;
+            alert("Erfolg!"); window.switchView('landing');
+        } catch (e) { alert("Fehler!"); } finally { btn.innerText = "Speichern"; btn.disabled = false; }
     };
 
     window.openDetailView = (docId) => {
-        if(document.getElementById('search-view').classList.contains('edit-mode')) return; const data = window.savedSetups[docId]; if(!data) return; window.currentDetailData = data;
-        document.getElementById('det_artNr').innerText = data.artNr; document.getElementById('det_sequence').innerText = data.sequence; document.getElementById('det_machine').innerText = data.machine; document.getElementById('det_employee').innerText = data.employee;
-        wizardToolsData = data.wizardToolsData || {}; wizardClampingData = data.wizardClampingData || [];
-        const clampCont = document.getElementById('det_clampingContainer'); clampCont.innerHTML = data.clampingHtml || '<p style="color:#888;">Keine Spannmittel hinterlegt.</p>'; clampCont.querySelectorAll('.btn-delete-badge').forEach(b => b.style.display = 'none'); document.getElementById('det_clampingCard').style.display = (data.clampingHtml && data.clampingHtml.trim() !== '') ? 'block' : 'none';
-        document.getElementById('det_toolContainer').innerHTML = data.toolsHtml || '<p style="color:#888;">Keine Werkzeuge hinterlegt.</p>';
-        const img = document.getElementById('det_setupPreview'); if(data.photoUrl) { img.src = data.photoUrl; img.style.display = 'block'; document.getElementById('det_photoCard').style.display = 'block'; } else { img.src = ''; img.style.display = 'none'; document.getElementById('det_photoCard').style.display = 'none'; }
+        const data = window.savedSetups[docId]; window.currentDetailData = data;
+        document.getElementById('det_artNr').innerText = data.artNr; 
+        document.getElementById('det_machine').innerText = data.machine;
+        document.getElementById('det_toolContainer').innerHTML = data.toolsHtml;
         window.switchView('detail');
     };
-
-    window.deleteSavedSetup = async (docId, artNr) => { if(confirm(`Möchtest du das Rüstblatt für Artikel ${artNr} wirklich endgültig löschen?`)) { try { await deleteDoc(doc(db, "ruestblaetter", docId)); } catch(e) { alert("Fehler beim Löschen: " + e.message); } } };
 
     function initRealtimeUpdates() {
         const q = query(collection(db, "ruestblaetter"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
-            window.savedSetups = {}; const tb = document.getElementById('tableBody'); tb.innerHTML = '';
+            const tb = document.getElementById('tableBody'); tb.innerHTML = '';
             snapshot.forEach((doc) => {
                 const r = doc.data(); window.savedSetups[doc.id] = r; 
-                tb.innerHTML += `<tr onclick="openDetailView('${doc.id}')" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.background='#f0f8ff'" onmouseout="this.style.background='transparent'"><td>${r.dateString || '-'}</td><td style="font-weight:bold; color:var(--sec); font-size: 1.1em;">${r.artNr}</td><td>${r.machine}</td><td>${r.sequence || '-'}</td><td>${r.employee}</td><td class="delete-col" onclick="event.stopPropagation()"><button class="btn-delete-row" onclick="deleteSavedSetup('${doc.id}', '${r.artNr}')">Löschen</button></td></tr>`;
+                tb.innerHTML += `<tr onclick="openDetailView('${doc.id}')"><td>${r.dateString}</td><td>${r.artNr}</td><td>${r.machine}</td><td>-</td><td>${r.employee}</td></tr>`;
             });
-        }, (error) => { console.error("Fehler beim Laden der Daten.", error); });
+        });
     }
 
-    window.filterTable = () => { const f=document.getElementById('searchInput').value.toUpperCase(), tr=document.getElementById('tableBody').rows; for(let i=0;i<tr.length;i++) tr[i].style.display=tr[i].innerText.toUpperCase().includes(f)?'':'none'; };
+    // --- AUTO VOLLBILD LOGIK ---
+    const enforceFullScreen = () => {
+        // Trigger bei jedem Klick, falls nicht im Vollbild
+        document.addEventListener('click', () => {
+            window.requestFullScreen();
+        }, { once: false });
+    };
 
-    // Start
-    initWendeplattenSync(); initReibahlenSync(); window.initModalDropdown(); initRealtimeUpdates(); initEmployeeSync(); initCompanySync(); window.switchView('landing');
+    window.addEventListener('load', () => {
+        initEmailSync(); initWendeplattenSync(); initReibahlenSync(); 
+        window.initModalDropdown(); initRealtimeUpdates(); initEmployeeSync(); initCompanySync(); 
+        window.switchView('landing');
+        enforceFullScreen();
+    });
 
 </script>
 </body>
