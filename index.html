@@ -406,6 +406,25 @@
         <img id="lightboxImg" style="max-width: 95vw; max-height: 95vh; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
     </div>
 
+    <div id="diagModal" class="modal-overlay hidden" style="z-index: 6000;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                <span style="font-weight:bold; font-size:1.5em; color:var(--primary);">🔍 System-Diagnose</span>
+                <span class="close-modal" onclick="closeDiagModal()">&times;</span>
+            </div>
+            <p style="color: #666; font-size: 0.95em; line-height: 1.4;">Testet die wichtigsten Hintergrund-Schnittstellen der App auf Fehler.</p>
+            
+            <ul style="list-style:none; padding:10px 0; margin: 0; font-size:1.1em; border-top: 1px solid #eee;">
+                <li id="diag_net" style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">⏳ Netzwerk & Internet...</li>
+                <li id="diag_db" style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">⏳ Datenbank-Verbindung...</li>
+                <li id="diag_pdf" style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">⏳ PDF-Engine...</li>
+                <li id="diag_cam" style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">⏳ Kamera- & Scanner-Zugriff...</li>
+            </ul>
+            
+            <button type="button" class="btn-action" style="background: var(--primary); margin-top: 25px;" onclick="closeDiagModal()">Schließen</button>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header no-print">
             <h1 onclick="switchView('landing')" title="Zur Startseite">Einrichteblatt Zerspanung</h1>
@@ -459,7 +478,7 @@
                             <label id="supplySubMenuLabel" style="font-size: 1.2em; font-weight: bold; color: var(--primary);">Zusatzbedarf:</label>
                             <button class="nav-btn" style="padding: 6px 15px; font-size: 0.9em; background: var(--primary);" onclick="closeSupplySubMenu()">OK</button>
                         </div>
-                        <p style="color: #666; font-size: 0.9em; margin-top: 0; margin-bottom: 15px;">Bitte wählen, what für diese Maschine benötigt wird:</p>
+                        <p style="color: #666; font-size: 0.9em; margin-top: 0; margin-bottom: 15px;">Bitte wählen, was für diese Maschine benötigt wird:</p>
                         <div class="wiz-grid-select" id="supplySubOptions">
                             </div>
                     </div>
@@ -475,7 +494,7 @@
         </div>
 
         <div id="create-view" class="hidden">
-            <form id="setupForm">
+            <form id="setupForm" onsubmit="event.preventDefault();">
                 <div id="printableArea" style="background:var(--bg); padding-bottom:10px;">
                     <div class="card">
                         <h2>Allgemeine Daten</h2>
@@ -631,6 +650,12 @@
                 <label style="color: #e74c3c;">Archiv bearbeiten</label>
                 <p style="color:#666; font-size:0.9em; margin-top:0;">Hier kannst du fehlerhafte Rüstblätter endgültig löschen.</p>
                 <button type="button" class="btn-action" style="background: #e74c3c; font-size: 1em; padding: 12px;" onclick="startArchiveEditMode()">Archiv öffnen & Einträge löschen</button>
+            </div>
+            
+            <div class="form-group" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #eee;">
+                <label style="color: var(--sec);">System-Diagnose</label>
+                <p style="color:#666; font-size:0.9em; margin-top:0;">Führt einen automatischen Test der wichtigsten Hintergrundsysteme durch.</p>
+                <button type="button" class="btn-action" style="background: var(--sec); font-size: 1em; padding: 12px;" onclick="runSystemDiagnostics()">🔍 Diagnose starten</button>
             </div>
 
             <button type="button" class="btn-action" onclick="closeSettingsModal()" style="background: var(--primary); margin-top: 20px;">Schließen</button>
@@ -949,7 +974,8 @@
             { facingMode: "environment" }, 
             config,
             (decodedText, decodedResult) => {
-                document.getElementById('wiz_artNr').value = decodedText;
+                let cleanText = decodedText.replace(/^\][A-Za-z]/, '');
+                document.getElementById('wiz_artNr').value = cleanText;
                 window.stopScanner();
             },
             (errorMessage) => { }
@@ -1082,6 +1108,65 @@
         } else if (pwd !== null) { alert("Falsch!"); }
     }
     window.closeSettingsModal = () => document.getElementById('settingsModal').classList.add('hidden');
+
+    // --- NEU: System Diagnose ---
+    window.closeDiagModal = () => document.getElementById('diagModal').classList.add('hidden');
+    window.runSystemDiagnostics = async () => {
+        document.getElementById('settingsModal').classList.add('hidden');
+        document.getElementById('diagModal').classList.remove('hidden');
+        
+        const setStatus = (id, text, isSuccess) => {
+            const el = document.getElementById(id);
+            el.innerHTML = (isSuccess ? '✅ ' : '❌ ') + text;
+            el.style.color = isSuccess ? 'var(--success)' : '#e74c3c';
+        };
+
+        // UI Reset
+        ['diag_db', 'diag_pdf', 'diag_cam', 'diag_net'].forEach(id => {
+            document.getElementById(id).innerHTML = '⏳ Teste...';
+            document.getElementById(id).style.color = '#333';
+        });
+
+        // 1. Netzwerk & Internet
+        try {
+            if(navigator.onLine) {
+                setStatus('diag_net', 'Netzwerkverbindung aktiv', true);
+            } else {
+                setStatus('diag_net', 'Keine Internetverbindung', false);
+            }
+        } catch(e) { setStatus('diag_net', 'Netzwerkfehler', false); }
+
+        // 2. Datenbank (Read / Write / Delete)
+        try {
+            const testRef = await addDoc(collection(db, "ruestblaetter"), { test: true, artNr: "SYSTEMTEST", createdAt: serverTimestamp() });
+            await deleteDoc(doc(db, "ruestblaetter", testRef.id));
+            setStatus('diag_db', 'Datenbank (Firebase) erreichbar', true);
+        } catch(e) {
+            setStatus('diag_db', 'Datenbank Fehler: ' + e.message, false);
+        }
+
+        // 3. PDF Engine
+        try {
+            if(typeof html2pdf !== 'undefined') {
+                setStatus('diag_pdf', 'PDF-Engine geladen & bereit', true);
+            } else {
+                setStatus('diag_pdf', 'PDF-Engine fehlt', false);
+            }
+        } catch(e) { setStatus('diag_pdf', 'PDF-Engine Fehler', false); }
+
+        // 4. Kamera-Zugriff
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const hasCam = devices.some(device => device.kind === 'videoinput');
+            if(hasCam) {
+                setStatus('diag_cam', 'Kamera(s) gefunden', true);
+            } else {
+                setStatus('diag_cam', 'Keine Kamera gefunden', false);
+            }
+        } catch(e) {
+            setStatus('diag_cam', 'Kamera-Zugriff blockiert/verweigert', false);
+        }
+    };
 
     function initCompanySync() {
         const companyDocRef = doc(db, "config", "company");
@@ -1235,7 +1320,7 @@
     window.toggleFullScreen = () => {
         const doc = window.document;
         const cancelFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
-        if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullscreenElement) {
+        if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !document.msFullscreenElement) {
             window.requestFullScreen();
         } else {
             if (cancelFS) cancelFS.call(doc);
@@ -1252,6 +1337,8 @@
         wizardToolsData = {}; wizardClampingData = []; currentMainPhotoSrc = "";
         window.renderWizardToolGrid(); window.showStep(1); 
         document.getElementById('wizardOverlay').classList.remove('hidden');
+        
+        setTimeout(() => document.getElementById('wiz_artNr').focus(), 100);
     };
 
     window.startArchiveEditMode = () => { window.closeSettingsModal(); document.getElementById('search-view').classList.add('edit-mode'); document.getElementById('btnExitEditMode').classList.remove('hidden'); window.switchView('search'); };
@@ -1270,10 +1357,17 @@
         document.getElementById('wizardOverlay').classList.add('hidden');
     };
 
-    window.showStep = (n) => { document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active')); document.getElementById('step' + n).classList.add('active'); };
+    window.showStep = (n) => { 
+        document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active')); 
+        document.getElementById('step' + n).classList.add('active'); 
+    };
 
     window.nextStep = (target) => {
-        if(target===2 && !document.getElementById('wiz_artNr').value.trim()) return alert("Fehlt");
+        if(target===2 && !document.getElementById('wiz_artNr').value.trim()) return alert("Bitte Artikelnummer eingeben.");
+        window.showStep(target);
+    };
+
+    window.prevStep = (target) => {
         window.showStep(target);
     };
 
@@ -1519,17 +1613,36 @@
         });
     }
 
-    // --- AUTO VOLLBILD LOGIK ---
     const enforceFullScreen = () => {
-        // Trigger bei jedem Klick, falls nicht im Vollbild
         document.addEventListener('click', () => {
             window.requestFullScreen();
         }, { once: false });
     };
 
+    const initEnterKeys = () => {
+        const forms = document.querySelectorAll('form');
+        forms.forEach(f => {
+            f.addEventListener('submit', (e) => e.preventDefault());
+        });
+
+        const allInputs = document.querySelectorAll('.wizard-input');
+        allInputs.forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (this.id === 'wiz_artNr') {
+                        window.nextStep(2);
+                    }
+                    this.blur();
+                }
+            });
+        });
+    };
+
     window.addEventListener('load', () => {
         initEmailSync(); initWendeplattenSync(); initReibahlenSync(); 
         window.initModalDropdown(); initRealtimeUpdates(); initEmployeeSync(); initCompanySync(); 
+        initEnterKeys();
         window.switchView('landing');
         enforceFullScreen();
     });
